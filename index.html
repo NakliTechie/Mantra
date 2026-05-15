@@ -464,6 +464,233 @@ table.matrix td.mono { font-family: var(--mono); font-size: 11.5px; color: var(-
 .muted { color: var(--text-faint); font-size: 11.5px; }
 .mono { font-family: var(--mono); }
 hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+/* ── Eval Bench ────────────────────────────────────────────── */
+.eval-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 14px;
+  flex: 1;
+  min-height: 0;
+}
+.eval-side {
+  display: flex; flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+.ds-list { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; flex: 1; }
+.ds-item {
+  padding: 6px 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12.5px;
+  display: flex; align-items: center; gap: 8px;
+}
+.ds-item:hover { border-color: var(--border-2); }
+.ds-item.on { border-color: var(--accent); background: var(--bg-3); }
+.ds-item .ds-name { flex: 1; color: var(--text); }
+.ds-item .ds-meta { font-size: 10.5px; color: var(--text-faint); }
+.eval-main { display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+.eval-cfg {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.eval-cfg textarea {
+  width: 100%;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  min-height: 56px;
+  resize: vertical;
+  outline: none;
+}
+.eval-cfg textarea:focus { border-color: var(--accent); }
+.asserts { display: flex; flex-direction: column; gap: 6px; }
+.assert-row {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 10px;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px;
+}
+.assert-row select, .assert-row input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  outline: none;
+}
+.assert-row select:focus, .assert-row input:focus { border-color: var(--accent); }
+.assert-row input[type=text] { flex: 1; }
+.assert-row .x {
+  cursor: pointer; color: var(--text-faint);
+  padding: 0 4px;
+  user-select: none;
+}
+.assert-row .x:hover { color: var(--err); }
+
+/* Dataset table */
+.ds-edit { overflow: auto; border: 1px solid var(--border); border-radius: 5px; background: var(--bg-2); flex: 1; min-height: 200px; }
+table.ds-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.ds-table th {
+  background: var(--bg-3);
+  color: var(--text-dim);
+  text-align: left;
+  padding: 6px 10px;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  position: sticky; top: 0; z-index: 1;
+}
+table.ds-table td {
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+table.ds-table textarea {
+  width: 100%;
+  min-height: 36px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  padding: 2px 0;
+  resize: vertical;
+  outline: none;
+}
+table.ds-table textarea:focus { background: var(--bg-3); }
+table.ds-table .row-del {
+  background: transparent; border: none; color: var(--text-faint);
+  cursor: pointer; padding: 0 6px;
+}
+table.ds-table .row-del:hover { color: var(--err); }
+
+/* Score table */
+.score-table-wrap { overflow: auto; max-height: 480px; border: 1px solid var(--border); border-radius: 5px; }
+table.score-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+table.score-table th, table.score-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+table.score-table th {
+  background: var(--bg-3); color: var(--text-dim);
+  font-weight: 600; font-size: 10.5px;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  position: sticky; top: 0; z-index: 1;
+}
+table.score-table td.cell-ok  { background: rgba(74,222,128,0.10); }
+table.score-table td.cell-bad { background: rgba(248,113,113,0.10); }
+table.score-table td.cell-pending { background: rgba(154,163,178,0.08); color: var(--text-faint); font-style: italic; }
+table.score-table .cell-detail { font-family: var(--mono); font-size: 10.5px; color: var(--text-dim); }
+.score-input-cell {
+  max-width: 200px;
+  font-family: var(--mono);
+  white-space: pre-wrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+/* ── RAG Lab ───────────────────────────────────────────────── */
+.rag-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  flex: 1;
+  min-height: 0;
+}
+.rag-col { display: flex; flex-direction: column; gap: 10px; overflow: hidden; min-height: 0; }
+.rag-box {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 8px;
+  min-height: 0;
+}
+.rag-box .h { font-size: 12.5px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.rag-box .h .grow { flex: 1; }
+.rag-box textarea {
+  width: 100%;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  resize: vertical;
+  outline: none;
+}
+.rag-box textarea:focus { border-color: var(--accent); }
+.rag-cfg-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 12px; }
+.rag-cfg-row label { display: inline-flex; align-items: center; gap: 4px; }
+.rag-cfg-row input[type=number] {
+  width: 70px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  outline: none;
+}
+.chunk-list, .retr-list { overflow-y: auto; max-height: 420px; display: flex; flex-direction: column; gap: 6px; }
+.chunk-card {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+.chunk-card .meta { color: var(--text-faint); font-size: 10.5px; margin-bottom: 3px; }
+.chunk-card.picked { border-color: var(--accent); }
+.retr-row {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 10px;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.retr-row:hover { border-color: var(--border-2); }
+.retr-row .rank { color: var(--text-faint); font-family: var(--mono); width: 24px; }
+.retr-row .src { color: var(--text-dim); font-family: var(--mono); font-size: 10px; min-width: 60px; }
+.retr-row .score { color: var(--text-faint); font-family: var(--mono); font-size: 10.5px; min-width: 70px; }
+.retr-row .preview { color: var(--text); flex: 1; font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.retr-row .pick { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 2px 6px; border-radius: 3px; font-size: 10.5px; cursor: pointer; }
+.retr-row .pick:hover { color: var(--text); border-color: var(--accent); }
+.retr-row.in-context .pick { background: var(--accent); color: #111; border-color: var(--accent); }
+.retr-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.retr-col h4 { margin: 0 0 4px; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
+.rag-status {
+  font-size: 11.5px; color: var(--text-dim); font-family: var(--mono);
+}
+.rag-status .ok { color: var(--ok); }
+.rag-status .err { color: var(--err); }
 </style>
 </head>
 <body>
@@ -476,8 +703,8 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
     </div>
     <div id="nav">
       <div class="nav-item active" data-tab="studio"><span class="nav-icon">▶</span> Prompt Studio</div>
-      <div class="nav-item disabled" data-tab="eval"><span class="nav-icon">⊜</span> Eval Bench <span class="nav-tag">soon</span></div>
-      <div class="nav-item disabled" data-tab="rag"><span class="nav-icon">⊞</span> RAG Lab <span class="nav-tag">soon</span></div>
+      <div class="nav-item" data-tab="eval"><span class="nav-icon">⊜</span> Eval Bench</div>
+      <div class="nav-item" data-tab="rag"><span class="nav-icon">⊞</span> RAG Lab</div>
       <div class="nav-item" data-tab="history"><span class="nav-icon">⌚</span> History</div>
       <div class="nav-item" data-tab="models"><span class="nav-icon">◌</span> Models &amp; Keys</div>
       <div class="nav-item" data-tab="settings"><span class="nav-icon">⚙</span> Settings</div>
@@ -523,21 +750,144 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
       </div>
     </section>
 
-    <!-- ============ EVAL (stub) ============ -->
+    <!-- ============ EVAL ============ -->
     <section class="panel" data-panel="eval">
-      <div class="panel-head"><div class="panel-title">Eval Bench</div></div>
-      <div class="stub">
-        <div class="big">Coming in Wave 2</div>
-        <div>Datasets, assertions, LLM-as-judge, pairwise compare, regression dashboards.</div>
+      <div class="panel-head">
+        <div class="panel-title">Eval Bench</div>
+        <div class="panel-desc">Score a dataset across providers with assertions or LLM-as-judge.</div>
+      </div>
+      <div class="eval-grid">
+        <aside class="eval-side">
+          <div style="display:flex;gap:6px;align-items:center">
+            <strong style="font-size:12px">Datasets</strong>
+            <span style="flex:1"></span>
+            <button class="btn ghost" id="btn-ds-new" title="New dataset">＋</button>
+            <button class="btn ghost" id="btn-ds-import" title="Import CSV / JSON">⇪</button>
+            <input type="file" id="ds-import-file" accept=".csv,.json,.tsv" style="display:none">
+          </div>
+          <div class="ds-list" id="ds-list"></div>
+          <div style="display:flex;gap:6px">
+            <button class="btn ghost" id="btn-ds-rename" style="flex:1">Rename</button>
+            <button class="btn ghost" id="btn-ds-export" style="flex:1">Export</button>
+            <button class="btn ghost" id="btn-ds-delete" style="flex:1;color:var(--err)">Delete</button>
+          </div>
+        </aside>
+        <div class="eval-main">
+          <div class="ds-edit" id="ds-edit"></div>
+          <div class="eval-cfg">
+            <div style="display:flex;align-items:center;gap:8px">
+              <strong style="font-size:12px">Prompt template</strong>
+              <span class="muted">use {{input}} and {{expected}} substitutions</span>
+            </div>
+            <textarea id="eval-template" placeholder="Answer concisely: {{input}}"></textarea>
+            <div style="display:flex;align-items:center;gap:8px">
+              <strong style="font-size:12px">Assertions</strong>
+              <select id="add-assert" style="background:var(--bg-3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:3px;font-size:11.5px">
+                <option value="">+ add assertion…</option>
+                <option value="exact">exact match</option>
+                <option value="contains">contains</option>
+                <option value="regex">regex match</option>
+                <option value="numeric">numeric (tolerance)</option>
+                <option value="json_parse">JSON parses</option>
+                <option value="llm_judge">LLM-as-judge</option>
+              </select>
+              <span class="muted">scored against each provider's output</span>
+            </div>
+            <div class="asserts" id="asserts"></div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <strong style="font-size:12px">Providers</strong>
+              <span id="eval-providers" class="muted">pick in Prompt Studio's provider row, then come back</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn primary" id="btn-eval-run">▶ Run eval</button>
+              <button class="btn ghost" id="btn-eval-stop" style="display:none">■ Stop</button>
+              <span class="muted" id="eval-status">idle</span>
+            </div>
+          </div>
+          <div class="score-table-wrap" id="score-wrap" style="display:none">
+            <table class="score-table" id="score-table"></table>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- ============ RAG (stub) ============ -->
+    <!-- ============ RAG ============ -->
     <section class="panel" data-panel="rag">
-      <div class="panel-head"><div class="panel-title">RAG Lab</div></div>
-      <div class="stub">
-        <div class="big">Coming in Wave 3</div>
-        <div>Chunker preview, embedding playground, retriever simulator, grounding checker.</div>
+      <div class="panel-head">
+        <div class="panel-title">RAG Lab</div>
+        <div class="panel-desc">Chunk → embed → retrieve → build context. Hand off to Studio for inference.</div>
+      </div>
+      <div class="rag-grid">
+        <div class="rag-col">
+          <div class="rag-box">
+            <div class="h"><span>① Documents &amp; chunking</span><span class="grow"></span><span class="rag-status" id="rag-doc-status"></span></div>
+            <textarea id="rag-doc" placeholder="Paste a document, README, transcript, or any long text…" style="min-height:180px"></textarea>
+            <div class="rag-cfg-row">
+              <label>Chunk size <input type="number" id="rag-chunksize" min="50" max="4000" value="500"> chars</label>
+              <label>Overlap <input type="number" id="rag-overlap" min="0" max="500" value="50"> chars</label>
+              <label>Splitter
+                <select id="rag-splitter" style="background:var(--bg-3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:3px 6px;border-radius:3px">
+                  <option value="paragraph">paragraph (\\n\\n)</option>
+                  <option value="sentence">sentence (. ! ?)</option>
+                  <option value="character">character (sliding)</option>
+                </select>
+              </label>
+              <button class="btn" id="btn-rag-rechunk">Re-chunk</button>
+            </div>
+            <div class="chunk-list" id="chunk-list"></div>
+          </div>
+          <div class="rag-box">
+            <div class="h"><span>② Embeddings</span><span class="grow"></span><span class="rag-status" id="rag-embed-status">not loaded</span></div>
+            <div class="rag-cfg-row">
+              <label>Model
+                <select id="rag-embed-model" style="background:var(--bg-3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:3px 6px;border-radius:3px;font-family:var(--mono)">
+                  <option value="Xenova/all-MiniLM-L6-v2">all-MiniLM-L6-v2 (~23 MB, 384d)</option>
+                  <option value="Xenova/bge-small-en-v1.5">bge-small-en-v1.5 (~33 MB, 384d)</option>
+                </select>
+              </label>
+              <button class="btn primary" id="btn-rag-embed">Load model + embed chunks</button>
+            </div>
+          </div>
+        </div>
+        <div class="rag-col">
+          <div class="rag-box">
+            <div class="h"><span>③ Retriever</span><span class="grow"></span><span class="rag-status" id="rag-retr-status"></span></div>
+            <textarea id="rag-query" placeholder="Query the indexed chunks…" style="min-height:60px"></textarea>
+            <div class="rag-cfg-row">
+              <label>Top-K <input type="number" id="rag-topk" min="1" max="20" value="5"></label>
+              <button class="btn primary" id="btn-rag-retrieve">Retrieve</button>
+            </div>
+            <div class="retr-cols">
+              <div class="retr-col">
+                <h4>Dense (cosine)</h4>
+                <div class="retr-list" id="retr-dense"></div>
+              </div>
+              <div class="retr-col">
+                <h4>BM25</h4>
+                <div class="retr-list" id="retr-bm25"></div>
+              </div>
+              <div class="retr-col">
+                <h4>Hybrid (RRF)</h4>
+                <div class="retr-list" id="retr-hybrid"></div>
+              </div>
+            </div>
+          </div>
+          <div class="rag-box">
+            <div class="h"><span>④ Context builder</span><span class="grow"></span><span class="rag-status" id="rag-ctx-status">0 chunks · 0 chars</span></div>
+            <textarea id="rag-template" style="min-height:80px">Use the following context to answer the question.
+
+{{retrieved}}
+
+Question: {{query}}
+Answer:</textarea>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn" id="btn-rag-preview">Preview assembled prompt</button>
+              <button class="btn primary" id="btn-rag-send">→ Send to Studio</button>
+              <button class="btn ghost" id="btn-rag-clear">Clear picked</button>
+            </div>
+            <pre id="rag-assembled" style="background:var(--bg-3);border:1px solid var(--border);border-radius:4px;padding:8px;font-family:var(--mono);font-size:11.5px;color:var(--text);white-space:pre-wrap;max-height:240px;overflow:auto;display:none"></pre>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1743,6 +2093,717 @@ function loadRunIntoStudio(run) {
 }
 
 // ─────────────────────────────────────────────────────────
+// Eval Bench — datasets, assertions, scored run
+// ─────────────────────────────────────────────────────────
+
+const evalState = {
+  datasets: [],          // [{id, name, rows: [{input, expected, tags}], updatedAt}]
+  activeId: null,
+  asserts: [],           // [{id, kind, config}]
+  template: '',
+  running: false,
+  abortControllers: [],  // per-call AbortController instances for stop-all
+};
+
+async function dsDir() {
+  if (!navigator.storage?.getDirectory) return null;
+  const root = await navigator.storage.getDirectory();
+  return root.getDirectoryHandle('mantra-datasets', { create: true });
+}
+
+async function loadDatasets() {
+  try {
+    const dir = await dsDir();
+    if (!dir) return [];
+    const arr = [];
+    for await (const [name, fh] of dir.entries()) {
+      if (!name.endsWith('.json')) continue;
+      try { arr.push(JSON.parse(await (await fh.getFile()).text())); } catch {}
+    }
+    arr.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    return arr;
+  } catch { return []; }
+}
+
+async function saveDataset(ds) {
+  try {
+    const dir = await dsDir();
+    if (!dir) return false;
+    ds.updatedAt = Date.now();
+    const fh = await dir.getFileHandle(ds.id + '.json', { create: true });
+    const w = await fh.createWritable();
+    await w.write(JSON.stringify(ds, null, 2));
+    await w.close();
+    return true;
+  } catch (e) { console.warn('saveDataset', e); return false; }
+}
+
+async function deleteDataset(id) {
+  try { const dir = await dsDir(); if (dir) await dir.removeEntry(id + '.json'); } catch {}
+}
+
+function newDataset(name = 'New dataset') {
+  return {
+    id: 'ds-' + new Date().toISOString().replace(/[:.]/g, '-') + '-' + shortId(),
+    name,
+    rows: [{ input: '', expected: '', tags: '' }],
+    updatedAt: Date.now(),
+  };
+}
+
+function activeDataset() {
+  return evalState.datasets.find(d => d.id === evalState.activeId) || null;
+}
+
+function renderDsList() {
+  const list = $('ds-list');
+  list.innerHTML = '';
+  if (!evalState.datasets.length) {
+    list.appendChild(el('div', { class: 'muted', style: { padding: '8px', textAlign: 'center' } }, 'No datasets. Click ＋ to create one or ⇪ to import.'));
+    return;
+  }
+  for (const d of evalState.datasets) {
+    const row = el('div', {
+      class: 'ds-item' + (d.id === evalState.activeId ? ' on' : ''),
+      onclick: () => { evalState.activeId = d.id; lsSet('mantra:ds:active', d.id); renderDsList(); renderDsEdit(); },
+    },
+      el('span', { class: 'ds-name' }, d.name),
+      el('span', { class: 'ds-meta' }, d.rows.length + ' rows'),
+    );
+    list.appendChild(row);
+  }
+}
+
+function renderDsEdit() {
+  const wrap = $('ds-edit');
+  wrap.innerHTML = '';
+  const ds = activeDataset();
+  if (!ds) {
+    wrap.appendChild(el('div', { class: 'muted', style: { padding: '20px', textAlign: 'center' } }, 'Pick or create a dataset to edit its rows.'));
+    return;
+  }
+  const tbl = el('table', { class: 'ds-table' });
+  tbl.appendChild(el('thead', {}, el('tr', {},
+    el('th', { style: 'width:36px' }, '#'),
+    el('th', {}, 'Input'),
+    el('th', {}, 'Expected'),
+    el('th', { style: 'width:110px' }, 'Tags'),
+    el('th', { style: 'width:36px' }, ''),
+  )));
+  const tbody = el('tbody');
+  ds.rows.forEach((row, idx) => {
+    const tr = el('tr', {},
+      el('td', { class: 'mono', style: 'color:var(--text-faint);font-size:11px' }, String(idx + 1)),
+      el('td', {}, el('textarea', { value: row.input, oninput: (e) => { row.input = e.target.value; saveDataset(ds); } })),
+      el('td', {}, el('textarea', { value: row.expected, oninput: (e) => { row.expected = e.target.value; saveDataset(ds); } })),
+      el('td', {}, el('textarea', { value: row.tags || '', placeholder: 'optional', oninput: (e) => { row.tags = e.target.value; saveDataset(ds); } })),
+      el('td', {}, el('button', { class: 'row-del', onclick: () => { ds.rows.splice(idx, 1); saveDataset(ds); renderDsEdit(); renderDsList(); } }, '×')),
+    );
+    tr.querySelectorAll('textarea').forEach(t => t.value = t.getAttribute('value') || ''); // browsers ignore value attr on textarea
+    tbody.appendChild(tr);
+  });
+  // "+ add row" footer
+  const addTr = el('tr', {}, el('td', { colspan: 5, style: 'text-align:center;padding:6px' },
+    el('button', { class: 'btn ghost', onclick: () => { ds.rows.push({ input: '', expected: '', tags: '' }); saveDataset(ds); renderDsEdit(); renderDsList(); } }, '＋ add row'),
+  ));
+  tbody.appendChild(addTr);
+  tbl.appendChild(tbody);
+  wrap.appendChild(tbl);
+  // Hack: actually populate textarea values
+  Array.from(wrap.querySelectorAll('tbody tr')).slice(0, ds.rows.length).forEach((tr, i) => {
+    const tas = tr.querySelectorAll('textarea');
+    if (tas[0]) tas[0].value = ds.rows[i].input || '';
+    if (tas[1]) tas[1].value = ds.rows[i].expected || '';
+    if (tas[2]) tas[2].value = ds.rows[i].tags || '';
+  });
+}
+
+function renderAsserts() {
+  const wrap = $('asserts');
+  wrap.innerHTML = '';
+  if (!evalState.asserts.length) {
+    wrap.appendChild(el('div', { class: 'muted' }, 'No assertions yet. Add one above.'));
+    return;
+  }
+  for (const a of evalState.asserts) {
+    const row = el('div', { class: 'assert-row' });
+    row.appendChild(el('span', { class: 'mono', style: 'min-width:90px;color:var(--text-dim)' }, a.kind));
+    if (a.kind === 'exact' || a.kind === 'json_parse') {
+      row.appendChild(el('span', { class: 'muted' }, a.kind === 'exact' ? 'output trimmed === expected trimmed' : 'output parses as JSON'));
+    } else if (a.kind === 'contains') {
+      // optional: which string to look for; defaults to "expected"
+      const inp = el('input', { type: 'text', placeholder: 'substring (blank = use Expected column)', value: a.config.needle || '', oninput: (e) => a.config.needle = e.target.value });
+      row.appendChild(el('span', { class: 'muted' }, 'output contains:'));
+      row.appendChild(inp);
+    } else if (a.kind === 'regex') {
+      const inp = el('input', { type: 'text', placeholder: '^foo (.+)$', value: a.config.pattern || '', oninput: (e) => a.config.pattern = e.target.value });
+      const flag = el('input', { type: 'text', placeholder: 'flags (i,m,s)', value: a.config.flags || 'i', style: 'width:70px', oninput: (e) => a.config.flags = e.target.value });
+      row.appendChild(el('span', { class: 'muted' }, 'matches:'));
+      row.appendChild(inp);
+      row.appendChild(flag);
+    } else if (a.kind === 'numeric') {
+      const tol = el('input', { type: 'number', step: '0.0001', value: a.config.tolerance ?? 0, placeholder: 'tolerance', style: 'width:90px', oninput: (e) => a.config.tolerance = +e.target.value });
+      row.appendChild(el('span', { class: 'muted' }, 'first number ≈ expected, tolerance:'));
+      row.appendChild(tol);
+    } else if (a.kind === 'llm_judge') {
+      const judgeSel = el('select', { onchange: (e) => a.config.judge = e.target.value });
+      for (const p of Object.values(PROVIDERS)) {
+        if (p.shape === 'webgpu') continue;
+        judgeSel.appendChild(el('option', { value: p.id, selected: a.config.judge === p.id }, p.label));
+      }
+      const rubric = el('input', { type: 'text', placeholder: 'rubric — instructions to the judge', value: a.config.rubric || 'Compare actual to expected. Return PASS or FAIL with one-line reason.', style: 'flex:1', oninput: (e) => a.config.rubric = e.target.value });
+      row.appendChild(el('span', { class: 'muted' }, 'judge:'));
+      row.appendChild(judgeSel);
+      row.appendChild(rubric);
+    }
+    row.appendChild(el('span', { class: 'x', title: 'remove', onclick: () => { evalState.asserts = evalState.asserts.filter(x => x.id !== a.id); renderAsserts(); } }, '×'));
+    wrap.appendChild(row);
+  }
+}
+
+function runAssertion(a, ctx) {
+  // ctx = {input, expected, output}
+  const out = (ctx.output || '').trim();
+  const exp = (ctx.expected || '').trim();
+  if (a.kind === 'exact')    return { pass: out === exp, detail: out === exp ? '=' : '≠' };
+  if (a.kind === 'contains') {
+    const needle = (a.config.needle || exp).trim();
+    if (!needle) return { pass: false, detail: 'no needle' };
+    return { pass: out.includes(needle), detail: out.includes(needle) ? '∋' : '∌' };
+  }
+  if (a.kind === 'regex') {
+    try {
+      const re = new RegExp(a.config.pattern || '.', a.config.flags || 'i');
+      const m = re.test(out);
+      return { pass: m, detail: m ? 'match' : 'no match' };
+    } catch (e) { return { pass: false, detail: 'bad regex: ' + e.message }; }
+  }
+  if (a.kind === 'numeric') {
+    const tol = +a.config.tolerance || 0;
+    const expN = parseFloat(exp);
+    const outN = parseFloat((out.match(/-?\d+(\.\d+)?/) || [''])[0]);
+    if (isNaN(expN) || isNaN(outN)) return { pass: false, detail: 'NaN' };
+    const ok = Math.abs(outN - expN) <= tol;
+    return { pass: ok, detail: (ok ? '≈ ' : '≠ ') + outN + (tol ? ' ±' + tol : '') };
+  }
+  if (a.kind === 'json_parse') {
+    try { JSON.parse(out); return { pass: true, detail: 'parsed' }; }
+    catch (e) { return { pass: false, detail: e.message.slice(0, 40) }; }
+  }
+  return { pass: false, detail: 'unknown' };
+}
+
+async function runLLMJudge(a, ctx) {
+  const judge = a.config.judge || 'openai';
+  const rubric = a.config.rubric || 'Compare actual to expected. Return PASS or FAIL with one-line reason.';
+  const prompt = `${rubric}\n\nINPUT:\n${ctx.input}\n\nEXPECTED:\n${ctx.expected}\n\nACTUAL:\n${ctx.output}\n\nVerdict:`;
+  let acc = '';
+  const ac = new AbortController();
+  try {
+    await callProvider(judge, {
+      system: 'You are a strict evaluator. Reply with a short verdict.',
+      prompt,
+      model: getModel(judge),
+      signal: ac.signal,
+      onToken: (t) => { acc += t; },
+      onUsage: () => {},
+    });
+    const verdict = acc.trim().slice(0, 200);
+    const pass = /\bPASS\b/i.test(verdict) || /^yes/i.test(verdict) || /^correct/i.test(verdict);
+    return { pass, detail: verdict };
+  } catch (e) { return { pass: false, detail: 'judge: ' + e.message }; }
+}
+
+function buildScoreHeader(providers) {
+  const tr = el('tr', {},
+    el('th', { style: 'width:30px' }, '#'),
+    el('th', { style: 'min-width:160px' }, 'Input'),
+    el('th', { style: 'min-width:140px' }, 'Expected'),
+  );
+  for (const p of providers) tr.appendChild(el('th', { style: 'min-width:160px' }, p.split('/').pop() || p));
+  return tr;
+}
+
+async function runEval() {
+  const ds = activeDataset();
+  if (!ds || !ds.rows.length) { toast('Pick a dataset with at least one row', 'err'); return; }
+  if (!evalState.asserts.length) { toast('Add at least one assertion', 'err'); return; }
+  const template = $('eval-template').value.trim() || '{{input}}';
+  const providers = Array.from(state.selected);
+  if (!providers.length) { toast('Pick providers in Prompt Studio first', 'err'); return; }
+
+  evalState.running = true;
+  $('btn-eval-run').disabled = true;
+  $('btn-eval-stop').style.display = '';
+  $('eval-status').textContent = 'running…';
+
+  const wrap = $('score-wrap');
+  const tbl = $('score-table');
+  wrap.style.display = '';
+  tbl.innerHTML = '';
+  const thead = el('thead', {}, buildScoreHeader(providers));
+  tbl.appendChild(thead);
+  const tbody = el('tbody');
+  tbl.appendChild(tbody);
+
+  // Pre-create rows
+  const cellRefs = []; // [rowIdx][provider] -> td
+  ds.rows.forEach((row, i) => {
+    const tr = el('tr', {},
+      el('td', { class: 'mono', style: 'color:var(--text-faint)' }, String(i + 1)),
+      el('td', { class: 'score-input-cell' }, row.input.slice(0, 200)),
+      el('td', { class: 'score-input-cell' }, row.expected.slice(0, 200)),
+    );
+    cellRefs[i] = {};
+    for (const p of providers) {
+      const td = el('td', { class: 'cell-pending' }, '…');
+      cellRefs[i][p] = td;
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  });
+
+  const tasks = [];
+  evalState.abortControllers = [];
+
+  for (let i = 0; i < ds.rows.length; i++) {
+    const row = ds.rows[i];
+    for (const pid of providers) {
+      const cell = cellRefs[i][pid];
+      tasks.push((async () => {
+        const subbedPrompt = applyTemplate(template, { input: row.input, expected: row.expected });
+        const ac = new AbortController();
+        evalState.abortControllers.push(ac);
+        let output = '';
+        try {
+          await callProvider(pid, {
+            system: '',
+            prompt: subbedPrompt,
+            model: getModel(pid),
+            signal: ac.signal,
+            onToken: (t) => { output += t; },
+            onUsage: () => {},
+          });
+          // Score all assertions
+          const scores = [];
+          for (const a of evalState.asserts) {
+            if (a.kind === 'llm_judge') {
+              scores.push({ kind: a.kind, ...(await runLLMJudge(a, { input: row.input, expected: row.expected, output })) });
+            } else {
+              scores.push({ kind: a.kind, ...runAssertion(a, { input: row.input, expected: row.expected, output }) });
+            }
+          }
+          const allPass = scores.every(s => s.pass);
+          cell.className = allPass ? 'cell-ok' : 'cell-bad';
+          cell.innerHTML = '';
+          cell.appendChild(el('div', {}, scores.map(s => (s.pass ? '✓ ' : '✗ ') + s.kind).join(' · ')));
+          cell.appendChild(el('div', { class: 'cell-detail' }, scores.map(s => s.detail).join(' | ').slice(0, 100)));
+          cell.title = 'OUTPUT:\n' + output.slice(0, 800) + '\n\nSCORES:\n' + scores.map(s => `${s.kind}: ${s.pass ? 'PASS' : 'FAIL'} — ${s.detail}`).join('\n');
+          cell.style.cursor = 'pointer';
+          cell.onclick = () => alert('PROMPT:\n' + subbedPrompt + '\n\nOUTPUT:\n' + output + '\n\nSCORES:\n' + scores.map(s => `${s.kind}: ${s.pass ? 'PASS' : 'FAIL'} — ${s.detail}`).join('\n'));
+        } catch (e) {
+          cell.className = 'cell-bad';
+          cell.innerHTML = '';
+          cell.appendChild(el('div', {}, '✗ error'));
+          cell.appendChild(el('div', { class: 'cell-detail' }, e.message.slice(0, 100)));
+        }
+      })());
+    }
+  }
+
+  await Promise.allSettled(tasks);
+
+  evalState.running = false;
+  evalState.abortControllers = [];
+  $('btn-eval-run').disabled = false;
+  $('btn-eval-stop').style.display = 'none';
+  $('eval-status').textContent = 'done · ' + (ds.rows.length * providers.length) + ' cells';
+}
+
+function stopEval() {
+  for (const ac of evalState.abortControllers) { try { ac.abort(); } catch {} }
+  evalState.abortControllers = [];
+  $('eval-status').textContent = 'stopping…';
+}
+
+async function initEvalTab() {
+  if (!evalState.datasets.length) {
+    evalState.datasets = await loadDatasets();
+    if (!evalState.datasets.length) {
+      const ds = newDataset('Sample QA');
+      ds.rows = [
+        { input: 'What is the capital of France?', expected: 'Paris', tags: 'geo' },
+        { input: 'Square root of 144?', expected: '12', tags: 'math' },
+        { input: 'CEO of OpenAI in 2024?', expected: 'Sam Altman', tags: 'biz' },
+      ];
+      evalState.datasets = [ds];
+      await saveDataset(ds);
+    }
+    evalState.activeId = lsGet('mantra:ds:active', evalState.datasets[0]?.id || null);
+    if (!evalState.datasets.find(d => d.id === evalState.activeId)) {
+      evalState.activeId = evalState.datasets[0]?.id || null;
+    }
+  }
+  // Restore template + asserts
+  $('eval-template').value = lsGet('mantra:eval:template', 'Answer concisely: {{input}}');
+  evalState.asserts = lsGetJSON('mantra:eval:asserts', [
+    { id: 'a-' + shortId(), kind: 'contains', config: {} },
+  ]);
+  renderDsList();
+  renderDsEdit();
+  renderAsserts();
+  // Show currently-selected studio providers
+  $('eval-providers').textContent = state.selected.size
+    ? Array.from(state.selected).map(p => PROVIDERS[p]?.label || p).join(', ')
+    : 'pick providers in Prompt Studio first';
+}
+
+// ─────────────────────────────────────────────────────────
+// RAG Lab — chunker, embedding worker, BM25 + cosine + RRF
+// ─────────────────────────────────────────────────────────
+
+const ragState = {
+  chunks: [],            // [{id, text, idx}]
+  vectors: null,         // Float32Array[]  parallel to chunks
+  bm25: null,            // {df, dl, avgdl, postings, terms}
+  embedModel: null,      // currently-loaded embed model id
+  worker: null,
+  retrieval: null,       // last retrieval result {dense, bm25, hybrid}
+  picked: new Set(),     // chunk ids picked for context
+};
+
+function chunkText(text, opts) {
+  const { size = 500, overlap = 50, splitter = 'paragraph' } = opts || {};
+  if (!text) return [];
+  let parts;
+  if (splitter === 'paragraph') parts = text.split(/\n\s*\n+/).map(s => s.trim()).filter(Boolean);
+  else if (splitter === 'sentence') parts = text.match(/[^.!?]+[.!?]+|\S[^.!?]*$/g) || [text];
+  else parts = [text];
+
+  // For paragraph/sentence: pack greedy until reaching size, then slide overlap.
+  // For character: sliding window across raw text.
+  const chunks = [];
+  if (splitter === 'character') {
+    const stride = Math.max(1, size - overlap);
+    for (let i = 0; i < text.length; i += stride) {
+      const piece = text.slice(i, i + size);
+      if (piece.trim()) chunks.push(piece);
+      if (i + size >= text.length) break;
+    }
+  } else {
+    let buf = '';
+    for (const p of parts) {
+      if (!buf) { buf = p; continue; }
+      if ((buf.length + 1 + p.length) <= size) { buf += '\n' + p; }
+      else {
+        chunks.push(buf);
+        // overlap by tail
+        const tail = overlap > 0 ? buf.slice(-overlap) : '';
+        buf = (tail ? tail + '\n' : '') + p;
+      }
+    }
+    if (buf) chunks.push(buf);
+  }
+  return chunks.map((text, idx) => ({ id: 'c' + idx, idx, text: text.trim() }));
+}
+
+function renderChunks() {
+  const wrap = $('chunk-list');
+  wrap.innerHTML = '';
+  const totalChars = ragState.chunks.reduce((s, c) => s + c.text.length, 0);
+  $('rag-doc-status').textContent = ragState.chunks.length + ' chunks · ' + totalChars + ' chars';
+  if (!ragState.chunks.length) {
+    wrap.appendChild(el('div', { class: 'muted', style: { padding: '8px' } }, 'Paste a document and click Re-chunk.'));
+    return;
+  }
+  for (const c of ragState.chunks.slice(0, 30)) {
+    const card = el('div', { class: 'chunk-card' },
+      el('div', { class: 'meta' }, '#' + c.idx + ' · ' + c.text.length + ' chars'),
+      el('div', {}, c.text.length > 240 ? c.text.slice(0, 240) + '…' : c.text),
+    );
+    wrap.appendChild(card);
+  }
+  if (ragState.chunks.length > 30) {
+    wrap.appendChild(el('div', { class: 'muted', style: { padding: '4px' } }, '… ' + (ragState.chunks.length - 30) + ' more'));
+  }
+}
+
+function rechunk() {
+  const text = $('rag-doc').value;
+  const size = +$('rag-chunksize').value || 500;
+  const overlap = +$('rag-overlap').value || 0;
+  const splitter = $('rag-splitter').value;
+  ragState.chunks = chunkText(text, { size, overlap, splitter });
+  ragState.vectors = null;
+  ragState.bm25 = null;
+  ragState.retrieval = null;
+  ragState.picked.clear();
+  renderChunks();
+  renderRetrieval();
+  $('rag-embed-status').innerHTML = ragState.embedModel ? 'model: <span class="ok">' + ragState.embedModel + '</span> (re-embed required)' : 'not loaded';
+  lsSet('mantra:rag:doc', text);
+}
+
+// BM25 (Okapi) — pure JS
+function tokenize(s) { return (s || '').toLowerCase().match(/[a-z0-9]+/g) || []; }
+function buildBM25(chunks) {
+  const N = chunks.length;
+  const df = new Map();
+  const dl = new Array(N);
+  const postings = new Map();
+  for (let i = 0; i < N; i++) {
+    const tokens = tokenize(chunks[i].text);
+    dl[i] = tokens.length;
+    const tf = new Map();
+    for (const t of tokens) tf.set(t, (tf.get(t) || 0) + 1);
+    for (const [t, f] of tf) {
+      df.set(t, (df.get(t) || 0) + 1);
+      if (!postings.has(t)) postings.set(t, []);
+      postings.get(t).push([i, f]);
+    }
+  }
+  const avgdl = dl.reduce((s, x) => s + x, 0) / Math.max(1, N);
+  return { df, dl, avgdl, postings, N };
+}
+function bm25Score(idx, query, k1 = 1.2, b = 0.75) {
+  const qTokens = tokenize(query);
+  const scores = new Array(idx.N).fill(0);
+  for (const t of qTokens) {
+    const ps = idx.postings.get(t);
+    if (!ps) continue;
+    const df = idx.df.get(t) || 0;
+    const idf = Math.log(1 + (idx.N - df + 0.5) / (df + 0.5));
+    for (const [i, f] of ps) {
+      const denom = f + k1 * (1 - b + b * idx.dl[i] / idx.avgdl);
+      scores[i] += idf * (f * (k1 + 1)) / denom;
+    }
+  }
+  return scores;
+}
+
+function cosineSim(a, b) {
+  let dot = 0, na = 0, nb = 0;
+  for (let i = 0; i < a.length; i++) { dot += a[i] * b[i]; na += a[i] * a[i]; nb += b[i] * b[i]; }
+  const d = Math.sqrt(na) * Math.sqrt(nb);
+  return d ? dot / d : 0;
+}
+
+function topK(scores, k, source) {
+  const arr = scores.map((s, i) => ({ i, s }));
+  arr.sort((a, b) => b.s - a.s);
+  return arr.slice(0, k).filter(x => x.s > 0).map(({ i, s }, rank) => ({ rank: rank + 1, idx: i, score: s, source }));
+}
+
+function rrfFuse(rankings, k = 60) {
+  const score = new Map();
+  for (const list of rankings) {
+    for (const r of list) score.set(r.idx, (score.get(r.idx) || 0) + 1 / (k + r.rank));
+  }
+  const arr = Array.from(score, ([idx, s]) => ({ idx, score: s }));
+  arr.sort((a, b) => b.score - a.score);
+  return arr.map((x, rank) => ({ ...x, rank: rank + 1, source: 'hybrid' }));
+}
+
+function createEmbedWorker() {
+  const code = `
+import {
+  env,
+  pipeline,
+} from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4/+esm';
+env.allowLocalModels  = true;
+env.localModelPath    = '/models/';
+env.allowRemoteModels = true;
+
+let embedder = null;
+self.addEventListener('message', async (e) => {
+  const { type } = e.data;
+  try {
+    if (type === 'load') {
+      embedder = await pipeline('feature-extraction', e.data.modelId, {
+        device: 'wasm',
+        progress_callback: (p) => self.postMessage({ type: 'progress', data: p }),
+      });
+      self.postMessage({ type: 'ready' });
+    } else if (type === 'embed') {
+      const out = [];
+      for (const text of e.data.texts) {
+        const o = await embedder(text, { pooling: 'mean', normalize: true });
+        out.push(Array.from(o.data));
+      }
+      self.postMessage({ type: 'embeddings', vectors: out, id: e.data.id });
+    }
+  } catch (err) {
+    self.postMessage({ type: 'error', message: err.message || String(err) });
+  }
+});
+`;
+  const blob = new Blob([code], { type: 'application/javascript' });
+  const w = new Worker(URL.createObjectURL(blob), { type: 'module' });
+  w.addEventListener('error', (e) => {
+    console.error('Embed worker error:', e.message);
+    $('rag-embed-status').innerHTML = '<span class="err">worker error: ' + (e.message || 'unknown') + '</span>';
+  });
+  return w;
+}
+
+async function embedChunks() {
+  if (!ragState.chunks.length) { toast('No chunks. Paste a document and re-chunk first.', 'err'); return; }
+  const modelId = $('rag-embed-model').value;
+  if (ragState.worker && ragState.embedModel !== modelId) {
+    try { ragState.worker.terminate(); } catch {}
+    ragState.worker = null;
+  }
+  if (!ragState.worker) {
+    ragState.worker = createEmbedWorker();
+    $('rag-embed-status').textContent = 'loading model…';
+    await new Promise((resolve, reject) => {
+      const onMsg = (e) => {
+        if (e.data.type === 'progress') {
+          const p = e.data.data;
+          if (p.status === 'progress' && p.loaded && p.total) {
+            const pct = Math.round((p.loaded / p.total) * 100);
+            $('rag-embed-status').textContent = 'loading ' + (p.file?.split('/').pop() || '') + ' ' + pct + '%';
+          }
+        } else if (e.data.type === 'ready') {
+          ragState.worker.removeEventListener('message', onMsg);
+          ragState.embedModel = modelId;
+          resolve();
+        } else if (e.data.type === 'error') {
+          ragState.worker.removeEventListener('message', onMsg);
+          reject(new Error(e.data.message));
+        }
+      };
+      ragState.worker.addEventListener('message', onMsg);
+      ragState.worker.postMessage({ type: 'load', modelId });
+    });
+  }
+  $('rag-embed-status').innerHTML = 'embedding ' + ragState.chunks.length + ' chunks…';
+  const id = shortId();
+  const vectors = await new Promise((resolve, reject) => {
+    const onMsg = (e) => {
+      if (e.data.type === 'embeddings' && e.data.id === id) {
+        ragState.worker.removeEventListener('message', onMsg);
+        resolve(e.data.vectors);
+      } else if (e.data.type === 'error') {
+        ragState.worker.removeEventListener('message', onMsg);
+        reject(new Error(e.data.message));
+      }
+    };
+    ragState.worker.addEventListener('message', onMsg);
+    ragState.worker.postMessage({ type: 'embed', texts: ragState.chunks.map(c => c.text), id });
+  });
+  ragState.vectors = vectors;
+  ragState.bm25 = buildBM25(ragState.chunks);
+  $('rag-embed-status').innerHTML = '<span class="ok">ready</span> · model ' + modelId + ' · ' + vectors.length + ' vectors · ' + vectors[0]?.length + 'd';
+}
+
+async function runRetrieve() {
+  const q = $('rag-query').value.trim();
+  if (!q) { toast('Type a query', 'err'); return; }
+  if (!ragState.chunks.length) { toast('No chunks. Paste a doc and re-chunk.', 'err'); return; }
+  if (!ragState.vectors || !ragState.bm25) { toast('Embed chunks first.', 'err'); return; }
+  const k = Math.max(1, +$('rag-topk').value || 5);
+  $('rag-retr-status').textContent = 'retrieving…';
+
+  // Dense: embed query, cosine against vectors
+  const qVec = await new Promise((resolve, reject) => {
+    const id = shortId();
+    const onMsg = (e) => {
+      if (e.data.type === 'embeddings' && e.data.id === id) {
+        ragState.worker.removeEventListener('message', onMsg);
+        resolve(e.data.vectors[0]);
+      } else if (e.data.type === 'error') {
+        ragState.worker.removeEventListener('message', onMsg);
+        reject(new Error(e.data.message));
+      }
+    };
+    ragState.worker.addEventListener('message', onMsg);
+    ragState.worker.postMessage({ type: 'embed', texts: [q], id });
+  });
+  const denseScores = ragState.vectors.map(v => cosineSim(qVec, v));
+  const dense = topK(denseScores, k, 'dense');
+
+  const bmScores = bm25Score(ragState.bm25, q);
+  const bm25 = topK(bmScores, k, 'bm25');
+
+  const hybrid = rrfFuse([dense, bm25]).slice(0, k);
+
+  ragState.retrieval = { dense, bm25, hybrid };
+  $('rag-retr-status').innerHTML = '<span class="ok">' + (dense.length + bm25.length + hybrid.length) + ' results</span>';
+  renderRetrieval();
+}
+
+function renderRetrieval() {
+  const make = (rows, target) => {
+    const wrap = $(target);
+    wrap.innerHTML = '';
+    if (!rows || !rows.length) { wrap.appendChild(el('div', { class: 'muted' }, '—')); return; }
+    for (const r of rows) {
+      const c = ragState.chunks[r.idx];
+      if (!c) continue;
+      const inCtx = ragState.picked.has(c.id);
+      const row = el('div', { class: 'retr-row' + (inCtx ? ' in-context' : ''), title: c.text },
+        el('span', { class: 'rank' }, '#' + r.rank),
+        el('span', { class: 'src' }, r.source),
+        el('span', { class: 'score' }, r.score.toFixed(3)),
+        el('span', { class: 'preview' }, c.text.slice(0, 100).replace(/\s+/g, ' ')),
+        el('button', { class: 'pick', onclick: (e) => {
+          e.stopPropagation();
+          if (ragState.picked.has(c.id)) ragState.picked.delete(c.id);
+          else ragState.picked.add(c.id);
+          renderRetrieval();
+          updateContextStatus();
+        } }, inCtx ? '✓ in ctx' : 'add'),
+      );
+      row.onclick = () => alert('Chunk #' + r.rank + ' (' + r.source + ', score=' + r.score.toFixed(4) + ')\n\n' + c.text);
+      wrap.appendChild(row);
+    }
+  };
+  make(ragState.retrieval?.dense, 'retr-dense');
+  make(ragState.retrieval?.bm25, 'retr-bm25');
+  make(ragState.retrieval?.hybrid, 'retr-hybrid');
+}
+
+function updateContextStatus() {
+  const picked = ragState.chunks.filter(c => ragState.picked.has(c.id));
+  const chars = picked.reduce((s, c) => s + c.text.length, 0);
+  $('rag-ctx-status').textContent = picked.length + ' chunks · ' + chars + ' chars';
+}
+
+function assembleRAGPrompt() {
+  const tpl = $('rag-template').value;
+  const q = $('rag-query').value.trim();
+  const picked = ragState.chunks.filter(c => ragState.picked.has(c.id));
+  const retrieved = picked.map((c, i) => `[${i + 1}] ${c.text}`).join('\n\n');
+  return tpl.replace(/\{\{retrieved\}\}/g, retrieved).replace(/\{\{query\}\}/g, q);
+}
+
+function previewRAGPrompt() {
+  const out = assembleRAGPrompt();
+  const pre = $('rag-assembled');
+  pre.textContent = out;
+  pre.style.display = '';
+}
+
+function sendRAGToStudio() {
+  const out = assembleRAGPrompt();
+  if (!out.trim()) { toast('Pick some chunks first', 'err'); return; }
+  $('prompt-editor').value = out;
+  lsSet(LS.PROMPT, out);
+  renderVarPanel();
+  switchTab('studio');
+  toast('Prompt loaded in Studio — click Run', 'ok');
+}
+
+function initRAGTab() {
+  $('rag-doc').value = lsGet('mantra:rag:doc', '');
+  if (!ragState.chunks.length && $('rag-doc').value.trim()) rechunk();
+  else renderChunks();
+  renderRetrieval();
+  updateContextStatus();
+}
+
+// ─────────────────────────────────────────────────────────
 // Tab switching
 // ─────────────────────────────────────────────────────────
 
@@ -1752,6 +2813,8 @@ function switchTab(tab) {
   if (tab === 'history') renderHistory();
   if (tab === 'models')  { renderKeyCards(); renderModelMatrix(); }
   if (tab === 'settings') refreshHistCount();
+  if (tab === 'eval')    initEvalTab();
+  if (tab === 'rag')     initRAGTab();
 }
 
 // ─────────────────────────────────────────────────────────
@@ -1836,6 +2899,119 @@ function boot() {
     renderHistory();
     refreshHistCount();
   });
+
+  // Eval Bench wiring
+  $('btn-ds-new').addEventListener('click', async () => {
+    const name = prompt('Dataset name?', 'Untitled');
+    if (!name) return;
+    const ds = newDataset(name);
+    evalState.datasets.unshift(ds);
+    await saveDataset(ds);
+    evalState.activeId = ds.id;
+    lsSet('mantra:ds:active', ds.id);
+    renderDsList();
+    renderDsEdit();
+  });
+  $('btn-ds-rename').addEventListener('click', async () => {
+    const ds = activeDataset();
+    if (!ds) return;
+    const name = prompt('Rename to:', ds.name);
+    if (!name) return;
+    ds.name = name;
+    await saveDataset(ds);
+    renderDsList();
+  });
+  $('btn-ds-delete').addEventListener('click', async () => {
+    const ds = activeDataset();
+    if (!ds) return;
+    if (!confirm('Delete dataset "' + ds.name + '"?')) return;
+    await deleteDataset(ds.id);
+    evalState.datasets = evalState.datasets.filter(d => d.id !== ds.id);
+    evalState.activeId = evalState.datasets[0]?.id || null;
+    lsSet('mantra:ds:active', evalState.activeId || '');
+    renderDsList();
+    renderDsEdit();
+  });
+  $('btn-ds-export').addEventListener('click', () => {
+    const ds = activeDataset();
+    if (!ds) return;
+    const blob = new Blob([JSON.stringify(ds, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = ds.name.replace(/[^a-z0-9]/gi, '-') + '.json';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+  $('btn-ds-import').addEventListener('click', () => $('ds-import-file').click());
+  $('ds-import-file').addEventListener('change', async (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const text = await f.text();
+    let rows = [];
+    let name = f.name.replace(/\.[^.]+$/, '');
+    try {
+      if (f.name.endsWith('.json')) {
+        const j = JSON.parse(text);
+        if (j.rows) { rows = j.rows; name = j.name || name; }
+        else if (Array.isArray(j)) rows = j.map(r => ({ input: r.input || r.prompt || r.question || '', expected: r.expected || r.answer || r.output || '', tags: r.tags || '' }));
+      } else {
+        // CSV/TSV
+        const sep = f.name.endsWith('.tsv') ? '\t' : ',';
+        const lines = text.split(/\r?\n/).filter(Boolean);
+        if (!lines.length) throw new Error('empty file');
+        const header = lines[0].split(sep).map(s => s.trim().toLowerCase().replace(/"/g, ''));
+        const ii = header.indexOf('input'), ie = header.indexOf('expected'), it = header.indexOf('tags');
+        rows = lines.slice(1).map(line => {
+          const cells = line.split(sep).map(s => s.replace(/^"|"$/g, ''));
+          return {
+            input:    ii >= 0 ? cells[ii] || '' : cells[0] || '',
+            expected: ie >= 0 ? cells[ie] || '' : cells[1] || '',
+            tags:     it >= 0 ? cells[it] || '' : '',
+          };
+        });
+      }
+    } catch (err) { toast('Import failed: ' + err.message, 'err'); return; }
+    if (!rows.length) { toast('No rows found', 'err'); return; }
+    const ds = newDataset(name);
+    ds.rows = rows;
+    evalState.datasets.unshift(ds);
+    await saveDataset(ds);
+    evalState.activeId = ds.id;
+    lsSet('mantra:ds:active', ds.id);
+    renderDsList();
+    renderDsEdit();
+    toast('Imported ' + rows.length + ' rows', 'ok');
+    e.target.value = '';
+  });
+  $('add-assert').addEventListener('change', (e) => {
+    if (!e.target.value) return;
+    evalState.asserts.push({ id: 'a-' + shortId(), kind: e.target.value, config: {} });
+    lsSetJSON('mantra:eval:asserts', evalState.asserts);
+    renderAsserts();
+    e.target.value = '';
+  });
+  $('eval-template').addEventListener('input', (e) => lsSet('mantra:eval:template', e.target.value));
+  $('btn-eval-run').addEventListener('click', async () => {
+    lsSetJSON('mantra:eval:asserts', evalState.asserts);
+    await runEval();
+  });
+  $('btn-eval-stop').addEventListener('click', stopEval);
+
+  // RAG Lab wiring
+  $('btn-rag-rechunk').addEventListener('click', rechunk);
+  $('rag-doc').addEventListener('input', () => lsSet('mantra:rag:doc', $('rag-doc').value));
+  $('rag-chunksize').addEventListener('change', rechunk);
+  $('rag-overlap').addEventListener('change', rechunk);
+  $('rag-splitter').addEventListener('change', rechunk);
+  $('btn-rag-embed').addEventListener('click', async () => {
+    try { await embedChunks(); } catch (e) { $('rag-embed-status').innerHTML = '<span class="err">' + (e.message || 'failed') + '</span>'; }
+  });
+  $('btn-rag-retrieve').addEventListener('click', async () => {
+    try { await runRetrieve(); } catch (e) { $('rag-retr-status').innerHTML = '<span class="err">' + (e.message || 'failed') + '</span>'; }
+  });
+  $('btn-rag-preview').addEventListener('click', previewRAGPrompt);
+  $('btn-rag-send').addEventListener('click', sendRAGToStudio);
+  $('btn-rag-clear').addEventListener('click', () => { ragState.picked.clear(); renderRetrieval(); updateContextStatus(); $('rag-assembled').style.display = 'none'; });
 
   // Settings
   $('opt-jsapi').checked = lsGet(LS.JSAPI, 'false') === 'true';
