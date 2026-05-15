@@ -1,0 +1,1861 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Chirag Patnaik">
+<meta name="description" content="Mantra — Multi-provider LLM workbench. Author prompts, fan out to Claude / GPT / Gemini / Ollama / WebGPU local models side-by-side. Keys never leave your browser.">
+<title>Mantra — LLM Workbench</title>
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mantra.naklitechie.com/">
+<meta property="og:title" content="Mantra — LLM Workbench">
+<meta property="og:description" content="Author prompts, fan out to multiple LLMs side-by-side. Browser-native, no server.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23111418'/%3E%3Ctext x='16' y='22' font-family='ui-serif,Georgia,serif' font-size='18' font-weight='700' text-anchor='middle' fill='%23c87a3a'%3E%E0%A5%90%3C/text%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #0f1115;
+  --bg-2: #161a21;
+  --bg-3: #1d222b;
+  --border: #2a3140;
+  --border-2: #3a4358;
+  --text: #e6e8eb;
+  --text-dim: #9aa3b2;
+  --text-faint: #6b7382;
+  --accent: #c87a3a;
+  --accent-dim: #985a28;
+  --ok: #4ade80;
+  --warn: #fbbf24;
+  --err: #f87171;
+  --link: #60a5fa;
+  --mono: ui-monospace, "JetBrains Mono", Menlo, Monaco, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow: hidden;
+}
+* { scrollbar-width: thin; scrollbar-color: var(--border-2) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 5px; border: 2px solid transparent; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover { background: var(--accent); background-clip: padding-box; border: 2px solid transparent; }
+
+/* Layout */
+#app { display: flex; height: 100vh; }
+#sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--bg-2);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+#sidebar-head { padding: 14px 14px 10px; border-bottom: 1px solid var(--border); }
+.brand {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  display: flex; align-items: center; gap: 8px;
+}
+.brand-mark {
+  display: inline-block; width: 26px; height: 26px;
+  background: var(--accent); color: #111;
+  text-align: center; line-height: 26px;
+  border-radius: 5px;
+  font-family: ui-serif, Georgia, serif;
+  font-size: 16px;
+}
+.brand-tag {
+  font-family: var(--sans); font-weight: 400;
+  font-size: 10.5px; color: var(--text-faint);
+  margin-top: 4px; line-height: 1.3;
+}
+#nav { flex: 1; overflow-y: auto; padding: 6px 0 12px; }
+.nav-item {
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--text-dim);
+  cursor: pointer;
+  display: flex; align-items: center; gap: 10px;
+  border-left: 2px solid transparent;
+}
+.nav-item:hover { color: var(--text); background: var(--bg-3); }
+.nav-item.active {
+  color: var(--text);
+  background: var(--bg-3);
+  border-left-color: var(--accent);
+}
+.nav-item .nav-icon { font-size: 14px; opacity: 0.8; }
+.nav-item.disabled { opacity: 0.4; cursor: not-allowed; }
+.nav-item .nav-tag {
+  margin-left: auto;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--bg-2);
+  color: var(--text-faint);
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+#sidebar-foot {
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+/* Main */
+#main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+.panel { display: none; flex: 1; overflow: auto; padding: 18px 22px; }
+.panel.active { display: flex; flex-direction: column; }
+.panel-head {
+  display: flex; align-items: baseline; gap: 14px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-title { font-size: 16px; font-weight: 600; color: var(--text); }
+.panel-desc { font-size: 12px; color: var(--text-dim); }
+
+/* Prompt Studio */
+.studio-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+.editor-box {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  display: flex; flex-direction: column;
+}
+.editor-head {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12px; color: var(--text-dim);
+}
+.editor-head .grow { flex: 1; }
+#prompt-editor {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 12px;
+  min-height: 160px;
+  resize: vertical;
+  outline: none;
+}
+#system-editor {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  padding: 10px 12px;
+  min-height: 60px;
+  resize: vertical;
+  outline: none;
+}
+.var-panel {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-3);
+  display: flex; flex-wrap: wrap; gap: 8px;
+  font-size: 12px;
+}
+.var-panel.empty { display: none; }
+.var-field { display: flex; align-items: center; gap: 4px; }
+.var-field label { color: var(--text-dim); font-family: var(--mono); }
+.var-field input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 3px 7px;
+  border-radius: 4px;
+  width: 140px;
+  outline: none;
+}
+.var-field input:focus { border-color: var(--accent); }
+.var-field .req { color: var(--err); }
+
+/* Provider chips */
+.providers-row {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+}
+.provider-chip {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 5px;
+  user-select: none;
+}
+.provider-chip:hover { color: var(--text); border-color: var(--border-2); }
+.provider-chip.on {
+  background: var(--accent);
+  color: #111;
+  border-color: var(--accent);
+}
+.provider-chip.on:hover { color: #111; }
+.provider-chip .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--text-faint);
+}
+.provider-chip.ready .dot { background: var(--ok); }
+.provider-chip.nokey .dot { background: var(--err); }
+
+/* Run controls */
+.run-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+}
+.btn {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 12.5px;
+  padding: 6px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  outline: none;
+}
+.btn:hover { border-color: var(--border-2); }
+.btn.primary { background: var(--accent); color: #111; border-color: var(--accent); font-weight: 600; }
+.btn.primary:hover { background: var(--accent-dim); border-color: var(--accent-dim); }
+.btn.ghost { background: transparent; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.run-bar .grow { flex: 1; }
+.run-bar .status {
+  font-size: 11.5px; color: var(--text-dim);
+  font-family: var(--mono);
+}
+
+/* Result cards */
+#results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  display: flex; flex-direction: column;
+  min-height: 200px;
+}
+.card-head {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px;
+}
+.card-head .name { font-weight: 600; color: var(--text); }
+.card-head .model {
+  color: var(--text-faint);
+  font-family: var(--mono);
+  font-size: 11px;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card-head .grow { flex: 1; }
+.card-head .badge {
+  font-size: 10.5px;
+  font-family: var(--mono);
+  color: var(--text-dim);
+  background: var(--bg-3);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+.card-head .badge.err { color: var(--err); }
+.card-head .badge.ok { color: var(--ok); }
+.card-body {
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  flex: 1;
+  overflow: auto;
+  max-height: 480px;
+}
+.card-body.error { color: var(--err); }
+.card-body.empty { color: var(--text-faint); font-style: italic; }
+.card-foot {
+  padding: 6px 12px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+  font-size: 11px;
+  color: var(--text-faint);
+  font-family: var(--mono);
+}
+.card-foot .grow { flex: 1; }
+.card-foot button {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.card-foot button:hover { color: var(--text); border-color: var(--border-2); }
+
+/* Models tab */
+.section { margin-bottom: 24px; }
+.section h3 { margin: 0 0 10px; font-size: 13px; color: var(--text); }
+.section .hint { font-size: 12px; color: var(--text-dim); margin-bottom: 10px; }
+.keys-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px;
+}
+.key-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 10px 12px;
+}
+.key-card .row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.key-card .name { font-weight: 600; font-size: 13px; }
+.key-card .url { font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+.key-card input[type=password], .key-card input[type=text] {
+  width: 100%;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  outline: none;
+}
+.key-card input:focus { border-color: var(--accent); }
+.key-card .btn-row { display: flex; gap: 6px; margin-top: 6px; }
+.key-card .badge {
+  font-size: 10.5px;
+  font-family: var(--mono);
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--bg-3);
+}
+.key-card .badge.ok { color: var(--ok); }
+.key-card .badge.err { color: var(--err); }
+
+/* Model matrix */
+table.matrix {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+table.matrix th, table.matrix td {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+table.matrix th {
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+table.matrix td.mono { font-family: var(--mono); font-size: 11.5px; color: var(--text-dim); }
+
+/* History */
+.history-list { display: flex; flex-direction: column; gap: 6px; }
+.history-row {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 8px 12px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.history-row:hover { border-color: var(--border-2); }
+.history-row .ts { color: var(--text-faint); font-family: var(--mono); font-size: 11px; width: 140px; }
+.history-row .pr {
+  color: var(--text);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.history-row .chips { display: flex; gap: 4px; }
+.history-row .chip {
+  font-size: 10px;
+  background: var(--bg-3);
+  color: var(--text-dim);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* Stub panels */
+.stub {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-dim);
+}
+.stub .big { font-size: 22px; color: var(--text); margin-bottom: 8px; }
+
+/* Toast */
+#toast {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-3);
+  border: 1px solid var(--border-2);
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 5px;
+  font-size: 12.5px;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+#toast.show { opacity: 1; }
+#toast.ok { border-color: var(--ok); }
+#toast.err { border-color: var(--err); }
+
+/* Settings small bits */
+.kv-row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.kv-row .k { color: var(--text-dim); font-size: 12.5px; }
+.kv-row .v { font-size: 12.5px; }
+.kv-row .v.mono { font-family: var(--mono); font-size: 11.5px; color: var(--text-faint); }
+
+/* Tiny utilities */
+.muted { color: var(--text-faint); font-size: 11.5px; }
+.mono { font-family: var(--mono); }
+hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <aside id="sidebar">
+    <div id="sidebar-head">
+      <div class="brand"><span class="brand-mark">ॐ</span> <span>Mantra</span></div>
+      <div class="brand-tag">Multi-LLM workbench · v1</div>
+    </div>
+    <div id="nav">
+      <div class="nav-item active" data-tab="studio"><span class="nav-icon">▶</span> Prompt Studio</div>
+      <div class="nav-item disabled" data-tab="eval"><span class="nav-icon">⊜</span> Eval Bench <span class="nav-tag">soon</span></div>
+      <div class="nav-item disabled" data-tab="rag"><span class="nav-icon">⊞</span> RAG Lab <span class="nav-tag">soon</span></div>
+      <div class="nav-item" data-tab="history"><span class="nav-icon">⌚</span> History</div>
+      <div class="nav-item" data-tab="models"><span class="nav-icon">◌</span> Models &amp; Keys</div>
+      <div class="nav-item" data-tab="settings"><span class="nav-icon">⚙</span> Settings</div>
+    </div>
+    <div id="sidebar-foot">
+      <div>No server. Keys in localStorage.</div>
+      <div style="margin-top:4px"><a href="https://naklitechie.github.io/" target="_blank" style="color:var(--text-faint);text-decoration:none">naklitechie.github.io</a></div>
+    </div>
+  </aside>
+
+  <main id="main">
+
+    <!-- ============ STUDIO ============ -->
+    <section class="panel active" data-panel="studio">
+      <div class="panel-head">
+        <div class="panel-title">Prompt Studio</div>
+        <div class="panel-desc">Fan a prompt across providers, see streamed outputs side by side.</div>
+      </div>
+      <div class="studio-grid">
+        <div class="editor-box">
+          <div class="editor-head">
+            <span>System (optional)</span>
+            <span class="grow"></span>
+            <span class="muted">applies to all providers</span>
+          </div>
+          <textarea id="system-editor" placeholder="You are a helpful assistant…"></textarea>
+          <div class="editor-head" style="border-top:1px solid var(--border)">
+            <span>Prompt</span>
+            <span class="grow"></span>
+            <span class="muted">use {{var}} for substitution, {{var?}} for optional</span>
+          </div>
+          <textarea id="prompt-editor" placeholder="Type your prompt. Use {{topic}} for variables."></textarea>
+          <div class="var-panel empty" id="var-panel"></div>
+          <div class="providers-row" id="providers-row"></div>
+          <div class="run-bar">
+            <button class="btn primary" id="btn-run">▶ Run</button>
+            <button class="btn ghost" id="btn-stop" style="display:none">■ Stop all</button>
+            <span class="grow"></span>
+            <span class="status" id="run-status">idle</span>
+          </div>
+        </div>
+        <div id="results"></div>
+      </div>
+    </section>
+
+    <!-- ============ EVAL (stub) ============ -->
+    <section class="panel" data-panel="eval">
+      <div class="panel-head"><div class="panel-title">Eval Bench</div></div>
+      <div class="stub">
+        <div class="big">Coming in Wave 2</div>
+        <div>Datasets, assertions, LLM-as-judge, pairwise compare, regression dashboards.</div>
+      </div>
+    </section>
+
+    <!-- ============ RAG (stub) ============ -->
+    <section class="panel" data-panel="rag">
+      <div class="panel-head"><div class="panel-title">RAG Lab</div></div>
+      <div class="stub">
+        <div class="big">Coming in Wave 3</div>
+        <div>Chunker preview, embedding playground, retriever simulator, grounding checker.</div>
+      </div>
+    </section>
+
+    <!-- ============ HISTORY ============ -->
+    <section class="panel" data-panel="history">
+      <div class="panel-head">
+        <div class="panel-title">Run history</div>
+        <div class="panel-desc">Last <span id="hist-count">0</span> runs · stored in OPFS.</div>
+        <span style="flex:1"></span>
+        <button class="btn" id="btn-history-export">Export to folder…</button>
+        <button class="btn ghost" id="btn-history-clear">Clear all</button>
+      </div>
+      <div id="history-list" class="history-list"></div>
+    </section>
+
+    <!-- ============ MODELS ============ -->
+    <section class="panel" data-panel="models">
+      <div class="panel-head">
+        <div class="panel-title">Models &amp; Keys</div>
+        <div class="panel-desc">Keys stay in this browser's localStorage. Test buttons hit each provider's models endpoint.</div>
+      </div>
+      <div class="section">
+        <h3>Providers</h3>
+        <div class="keys-grid" id="keys-grid"></div>
+      </div>
+      <div class="section">
+        <h3>Model matrix</h3>
+        <div class="hint muted">Pricing per 1K tokens · last refreshed 2026-05-15.</div>
+        <table class="matrix" id="model-matrix"></table>
+      </div>
+      <div class="section">
+        <h3>Rate-limit calculator</h3>
+        <div class="hint muted">Given an RPM and per-call token budget, estimate throughput.</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;align-items:center">
+          <label>RPM: <input type="number" id="rl-rpm" value="60" style="width:80px;background:var(--bg-3);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px;font-family:var(--mono)"></label>
+          <label>Job size: <input type="number" id="rl-jobs" value="1000" style="width:100px;background:var(--bg-3);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px;font-family:var(--mono)"></label>
+          <label>Concurrency: <input type="number" id="rl-conc" value="4" style="width:80px;background:var(--bg-3);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px;font-family:var(--mono)"></label>
+          <span class="mono muted" id="rl-result"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SETTINGS ============ -->
+    <section class="panel" data-panel="settings">
+      <div class="panel-head">
+        <div class="panel-title">Settings</div>
+      </div>
+      <div class="section">
+        <h3>JS API</h3>
+        <div class="kv-row">
+          <div class="k">window.mantra</div>
+          <div class="v">
+            <label><input type="checkbox" id="opt-jsapi"> Expose <code class="mono">window.mantra</code> with <code class="mono">runPrompt</code>, <code class="mono">getRuns</code>, <code class="mono">onRun</code></label>
+          </div>
+        </div>
+        <div class="kv-row">
+          <div class="k">Cross-tab postMessage</div>
+          <div class="v"><label><input type="checkbox" id="opt-postmsg"> Listen for prompts pushed from other Browser/ apps</label></div>
+        </div>
+      </div>
+      <div class="section">
+        <h3>Storage</h3>
+        <div class="kv-row">
+          <div class="k">Runs in OPFS</div>
+          <div class="v mono"><span id="opfs-count">…</span> · <button class="btn ghost" id="btn-opfs-import">Import from folder…</button></div>
+        </div>
+        <div class="kv-row">
+          <div class="k">Clear local data</div>
+          <div class="v"><button class="btn" id="btn-clear-all">Wipe keys, runs &amp; preferences</button></div>
+        </div>
+      </div>
+      <div class="section">
+        <h3>About</h3>
+        <div class="muted">Mantra is part of the <a href="https://naklitechie.github.io/" target="_blank" style="color:var(--link)">NakliTechie</a> single-file browser-native series. Source: <a href="https://github.com/NakliTechie/Mantra" target="_blank" style="color:var(--link)">github.com/NakliTechie/Mantra</a></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+// ─────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────
+
+// Provider registry. shape determines SSE adapter.
+const PROVIDERS = {
+  anthropic: {
+    id: 'anthropic',
+    label: 'Anthropic',
+    baseUrl: 'https://api.anthropic.com/v1/messages',
+    keyHeader: 'x-api-key',
+    keyPrefix: '',
+    extraHeaders: {
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    modelsUrl: null,
+    defaultModel: 'claude-opus-4-7',
+    knownModels: ['claude-opus-4-7', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001', 'claude-3-7-sonnet-20250219', 'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
+    shape: 'anthropic',
+  },
+  openai: {
+    id: 'openai',
+    label: 'OpenAI',
+    baseUrl: 'https://api.openai.com/v1/chat/completions',
+    keyHeader: 'Authorization',
+    keyPrefix: 'Bearer ',
+    modelsUrl: 'https://api.openai.com/v1/models',
+    defaultModel: 'gpt-5',
+    knownModels: ['gpt-5', 'gpt-5-mini', 'gpt-4o', 'gpt-4o-mini', 'o3', 'o3-mini'],
+    shape: 'openai',
+  },
+  gemini: {
+    id: 'gemini',
+    label: 'Google Gemini',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent',
+    keyParam: 'key',
+    keyParamAlsoForList: true,
+    modelsUrl: 'https://generativelanguage.googleapis.com/v1beta/models',
+    defaultModel: 'gemini-2.5-pro',
+    knownModels: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'],
+    shape: 'gemini',
+  },
+  openrouter: {
+    id: 'openrouter',
+    label: 'OpenRouter',
+    baseUrl: 'https://openrouter.ai/api/v1/chat/completions',
+    keyHeader: 'Authorization',
+    keyPrefix: 'Bearer ',
+    modelsUrl: 'https://openrouter.ai/api/v1/models',
+    defaultModel: 'anthropic/claude-3.5-sonnet',
+    knownModels: ['anthropic/claude-3.5-sonnet', 'openai/gpt-4o', 'google/gemini-2.5-pro', 'meta-llama/llama-3.3-70b-instruct'],
+    shape: 'openai',
+  },
+  groq: {
+    id: 'groq',
+    label: 'Groq',
+    baseUrl: 'https://api.groq.com/openai/v1/chat/completions',
+    keyHeader: 'Authorization',
+    keyPrefix: 'Bearer ',
+    modelsUrl: 'https://api.groq.com/openai/v1/models',
+    defaultModel: 'llama-3.3-70b-versatile',
+    knownModels: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'],
+    shape: 'openai',
+  },
+  ollama: {
+    id: 'ollama',
+    label: 'Ollama',
+    baseUrl: 'http://localhost:11434/v1/chat/completions',
+    keyHeader: null,
+    modelsUrl: 'http://localhost:11434/api/tags',
+    modelsShape: 'ollama-tags',
+    defaultModel: 'llama3.2',
+    knownModels: [],
+    shape: 'openai',
+    local: true,
+  },
+  lmstudio: {
+    id: 'lmstudio',
+    label: 'LM Studio',
+    baseUrl: 'http://localhost:1234/v1/chat/completions',
+    keyHeader: null,
+    modelsUrl: 'http://localhost:1234/v1/models',
+    defaultModel: '',
+    knownModels: [],
+    shape: 'openai',
+    local: true,
+  },
+  webgpu: {
+    id: 'webgpu',
+    label: 'Local WebGPU',
+    shape: 'webgpu',
+    defaultModel: 'onnx-community/gemma-3-1b-it-ONNX-GQA',
+    webgpuModels: [
+      { id: 'onnx-community/gemma-3-1b-it-ONNX-GQA',     label: 'Gemma 3 1B (q4f16)',   dtype: 'q4f16', size: '~750 MB' },
+      { id: 'onnx-community/Qwen2.5-0.5B-Instruct',       label: 'Qwen 2.5 0.5B (q4f16)', dtype: 'q4f16', size: '~350 MB' },
+      { id: 'HuggingFaceTB/SmolLM2-1.7B-Instruct',        label: 'SmolLM2 1.7B (q4f16)', dtype: 'q4f16', size: '~1.1 GB' },
+    ],
+    local: true,
+  },
+};
+
+// Pricing per 1K tokens (USD). Refreshed 2026-05-15.
+const PRICING = {
+  'claude-opus-4-7':           { in: 0.015,    out: 0.075   },
+  'claude-sonnet-4-6':         { in: 0.003,    out: 0.015   },
+  'claude-haiku-4-5':          { in: 0.001,    out: 0.005   },
+  'claude-haiku-4-5-20251001': { in: 0.001,    out: 0.005   },
+  'claude-3-7-sonnet-20250219':{ in: 0.003,    out: 0.015   },
+  'claude-3-5-sonnet-20241022':{ in: 0.003,    out: 0.015   },
+  'claude-3-5-haiku-20241022': { in: 0.0008,   out: 0.004   },
+  'gpt-5':                     { in: 0.005,    out: 0.015   },
+  'gpt-5-mini':                { in: 0.0001,   out: 0.0004  },
+  'gpt-4o':                    { in: 0.005,    out: 0.015   },
+  'gpt-4o-mini':               { in: 0.00015,  out: 0.0006  },
+  'o3':                        { in: 0.01,     out: 0.04    },
+  'o3-mini':                   { in: 0.0011,   out: 0.0044  },
+  'gemini-2.5-pro':            { in: 0.00125,  out: 0.005   },
+  'gemini-2.5-flash':          { in: 0.000075, out: 0.0003  },
+  'gemini-2.0-flash':          { in: 0.00010,  out: 0.00040 },
+  'gemini-1.5-pro':            { in: 0.00125,  out: 0.005   },
+  'llama-3.3-70b-versatile':   { in: 0.00059,  out: 0.00079 },
+};
+
+// Token approximation per provider — Claude/Gemini don't expose tokenizers.
+// chars / 3.5 is the rough number for English; surface this as "~" in UI.
+function approxTokens(text) { return Math.max(1, Math.ceil((text || '').length / 3.5)); }
+
+// localStorage keys (namespaced)
+const LS = {
+  KEY: (p) => `mantra:keys:${p}`,
+  MODEL: (p) => `mantra:model:${p}`,
+  MODELS_LIST: (p) => `mantra:models-list:${p}`,
+  MODELS_FETCHED_AT: (p) => `mantra:models-fetched:${p}`,
+  SELECTED: 'mantra:selected',
+  PROMPT: 'mantra:prompt',
+  SYSTEM: 'mantra:system',
+  VARS: 'mantra:vars',
+  JSAPI: 'mantra:opt:jsapi',
+  POSTMSG: 'mantra:opt:postmsg',
+};
+
+// ─────────────────────────────────────────────────────────
+// UI helpers
+// ─────────────────────────────────────────────────────────
+
+const $ = (id) => document.getElementById(id);
+const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+const lsGetJSON = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
+const lsSetJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+
+function el(tag, attrs = {}, ...children) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === 'class') e.className = v;
+    else if (k === 'style' && typeof v === 'object') Object.assign(e.style, v);
+    else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+    else if (v === true) e.setAttribute(k, '');
+    else if (v !== false && v != null) e.setAttribute(k, v);
+  }
+  for (const c of children.flat()) {
+    if (c == null || c === false) continue;
+    e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  }
+  return e;
+}
+
+let toastTimer = null;
+function toast(msg, kind) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'show' + (kind ? ' ' + kind : '');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 2400);
+}
+
+function copy(text) {
+  navigator.clipboard.writeText(text).then(() => toast('Copied', 'ok'), () => toast('Copy failed', 'err'));
+}
+
+function shortId() { return Math.random().toString(36).slice(2, 10); }
+function fmtMs(ms) { return ms < 1000 ? ms + 'ms' : (ms / 1000).toFixed(2) + 's'; }
+function fmtUsd(n) { if (n == null) return ''; if (n < 0.0001) return '<$0.0001'; return '$' + n.toFixed(4); }
+
+// ─────────────────────────────────────────────────────────
+// Templater — {{var}} substitution
+// ─────────────────────────────────────────────────────────
+
+const VAR_RE = /\{\{(\w+)(\?)?(?:\:(\w+))?\}\}/g;
+
+function findVars(template) {
+  const seen = new Map();
+  let m;
+  VAR_RE.lastIndex = 0;
+  while ((m = VAR_RE.exec(template || ''))) {
+    const name = m[1];
+    if (!seen.has(name)) seen.set(name, { name, optional: !!m[2] });
+  }
+  return Array.from(seen.values());
+}
+
+function applyTemplate(template, vars) {
+  return (template || '').replace(VAR_RE, (_, name, optional) => {
+    const v = vars[name];
+    if (v == null || v === '') return optional ? '' : ('{{' + name + '}}');
+    return String(v);
+  });
+}
+
+// ─────────────────────────────────────────────────────────
+// Provider adapters — fetch + SSE parsing
+// ─────────────────────────────────────────────────────────
+
+function getKey(provider) {
+  return lsGet(LS.KEY(provider), '');
+}
+
+function getModel(provider) {
+  return lsGet(LS.MODEL(provider), PROVIDERS[provider].defaultModel);
+}
+
+async function* parseSSEOpenAI(reader) {
+  const dec = new TextDecoder();
+  let buf = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split('\n');
+    buf = lines.pop() || '';
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const data = line.slice(6).trim();
+      if (data === '[DONE]') return;
+      try {
+        const j = JSON.parse(data);
+        const tok = j.choices?.[0]?.delta?.content;
+        if (tok) yield { type: 'token', text: tok };
+        const usage = j.usage;
+        if (usage) yield { type: 'usage', usage };
+      } catch {}
+    }
+  }
+}
+
+async function* parseSSEAnthropic(reader) {
+  const dec = new TextDecoder();
+  let buf = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split('\n');
+    buf = lines.pop() || '';
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const data = line.slice(6).trim();
+      if (!data) continue;
+      try {
+        const j = JSON.parse(data);
+        if (j.type === 'content_block_delta' && j.delta?.type === 'text_delta') {
+          yield { type: 'token', text: j.delta.text };
+        } else if (j.type === 'message_delta' && j.usage) {
+          yield { type: 'usage', usage: { prompt_tokens: j.usage.input_tokens, completion_tokens: j.usage.output_tokens } };
+        } else if (j.type === 'message_start' && j.message?.usage) {
+          yield { type: 'usage', usage: { prompt_tokens: j.message.usage.input_tokens, completion_tokens: j.message.usage.output_tokens } };
+        }
+      } catch {}
+    }
+  }
+}
+
+async function* parseSSEGemini(reader) {
+  // Gemini's streamGenerateContent returns a chunked JSON ARRAY. With alt=sse it returns SSE.
+  // Since we request `?alt=sse`, treat as SSE: each "data: " line carries one chunk JSON.
+  const dec = new TextDecoder();
+  let buf = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split('\n');
+    buf = lines.pop() || '';
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const data = line.slice(6).trim();
+      if (!data) continue;
+      try {
+        const j = JSON.parse(data);
+        const parts = j.candidates?.[0]?.content?.parts || [];
+        for (const p of parts) if (p.text) yield { type: 'token', text: p.text };
+        if (j.usageMetadata) yield { type: 'usage', usage: { prompt_tokens: j.usageMetadata.promptTokenCount, completion_tokens: j.usageMetadata.candidatesTokenCount } };
+      } catch {}
+    }
+  }
+}
+
+async function callProvider(provider, { system, prompt, model, signal, onToken, onUsage }) {
+  const P = PROVIDERS[provider];
+  if (!P) throw new Error('Unknown provider: ' + provider);
+  if (P.shape === 'webgpu') return callWebGPU({ system, prompt, model, signal, onToken, onUsage });
+
+  const key = getKey(provider);
+  if (P.keyHeader && !key && !P.local) throw new Error('No API key set for ' + P.label);
+
+  let url = P.baseUrl;
+  const headers = { 'Content-Type': 'application/json' };
+  let body;
+
+  if (P.shape === 'anthropic') {
+    headers[P.keyHeader] = key;
+    Object.assign(headers, P.extraHeaders || {});
+    body = JSON.stringify({
+      model,
+      max_tokens: 4096,
+      stream: true,
+      system: system || undefined,
+      messages: [{ role: 'user', content: prompt }],
+    });
+  } else if (P.shape === 'gemini') {
+    url = P.baseUrl.replace('{model}', encodeURIComponent(model)) + '?alt=sse&' + P.keyParam + '=' + encodeURIComponent(key);
+    const contents = [{ role: 'user', parts: [{ text: prompt }] }];
+    body = JSON.stringify({
+      contents,
+      systemInstruction: system ? { parts: [{ text: system }] } : undefined,
+    });
+  } else {
+    // openai-shape (also openrouter, groq, ollama, lmstudio)
+    if (P.keyHeader && key) headers[P.keyHeader] = (P.keyPrefix || '') + key;
+    const messages = [];
+    if (system) messages.push({ role: 'system', content: system });
+    messages.push({ role: 'user', content: prompt });
+    body = JSON.stringify({ model, messages, stream: true, stream_options: { include_usage: true } });
+  }
+
+  const resp = await fetch(url, { method: 'POST', headers, body, signal });
+  if (!resp.ok) {
+    let detail = resp.statusText;
+    try { const t = await resp.text(); detail = t.slice(0, 300); } catch {}
+    throw new Error(`${P.label} ${resp.status}: ${detail}`);
+  }
+  if (!resp.body) throw new Error('No response body');
+  const reader = resp.body.getReader();
+  let parser;
+  if (P.shape === 'anthropic') parser = parseSSEAnthropic(reader);
+  else if (P.shape === 'gemini') parser = parseSSEGemini(reader);
+  else parser = parseSSEOpenAI(reader);
+
+  for await (const ev of parser) {
+    if (ev.type === 'token') onToken(ev.text);
+    else if (ev.type === 'usage') onUsage(ev.usage);
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// Local WebGPU provider — Transformers.js worker
+// ─────────────────────────────────────────────────────────
+
+let webgpuWorker = null;
+let webgpuLoadedModel = null;
+const webgpuLoaders = new Map();
+const webgpuStreams = new Map();
+
+function createWebGPUWorker() {
+  const code = `
+import {
+  env,
+  AutoTokenizer,
+  AutoModelForCausalLM,
+  TextStreamer,
+  InterruptableStoppingCriteria,
+} from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4/+esm';
+
+env.allowLocalModels  = true;
+env.localModelPath    = '/models/';
+env.allowRemoteModels = true;
+
+let tokenizer = null;
+let model = null;
+const stopping = new InterruptableStoppingCriteria();
+
+self.addEventListener('message', async (e) => {
+  const d = e.data;
+  try {
+    if (d.type === 'load') {
+      tokenizer = null; model = null;
+      tokenizer = await AutoTokenizer.from_pretrained(d.modelId, {
+        progress_callback: (p) => self.postMessage({ type: 'progress', data: p }),
+      });
+      model = await AutoModelForCausalLM.from_pretrained(d.modelId, {
+        dtype: d.dtype || 'q4f16',
+        device: 'webgpu',
+        progress_callback: (p) => self.postMessage({ type: 'progress', data: p }),
+      });
+      self.postMessage({ type: 'warmup' });
+      const wu = tokenizer('a');
+      await model.generate({ ...wu, max_new_tokens: 1 });
+      self.postMessage({ type: 'ready' });
+    } else if (d.type === 'generate') {
+      stopping.reset();
+      const messages = d.messages;
+      const inputs = tokenizer.apply_chat_template(messages, { add_generation_prompt: true, return_dict: true });
+      const promptTokens = Array.isArray(inputs.input_ids?.data) ? inputs.input_ids.data.length :
+                           (inputs.input_ids?.size != null ? inputs.input_ids.size : 0);
+      const streamer = new TextStreamer(tokenizer, {
+        skip_prompt: true,
+        skip_special_tokens: true,
+        callback_function: (text) => self.postMessage({ type: 'token', text, id: d.id }),
+      });
+      const out = await model.generate({
+        ...inputs,
+        max_new_tokens: d.maxTokens || 1024,
+        do_sample: true,
+        temperature: d.temperature ?? 0.7,
+        top_k: 50,
+        top_p: 0.95,
+        streamer,
+        stopping_criteria: stopping,
+      });
+      // Tally completion tokens from output sequence length minus prompt length
+      const outLen = out?.[0]?.length || out?.dims?.[1] || 0;
+      const completion = Math.max(0, outLen - promptTokens);
+      self.postMessage({ type: 'usage', usage: { prompt_tokens: promptTokens, completion_tokens: completion }, id: d.id });
+      self.postMessage({ type: 'complete', id: d.id });
+    } else if (d.type === 'stop') {
+      stopping.interrupt();
+    }
+  } catch (err) {
+    self.postMessage({ type: 'error', message: err.message || String(err), id: d.id });
+  }
+});
+`;
+  const blob = new Blob([code], { type: 'application/javascript' });
+  const url = URL.createObjectURL(blob);
+  const w = new Worker(url, { type: 'module' });
+  w.addEventListener('error', (e) => {
+    console.error('WebGPU worker error:', e.message, e);
+    toast('Local worker error: ' + (e.message || 'unknown'), 'err');
+  });
+  w.addEventListener('message', (ev) => {
+    const d = ev.data;
+    if (d.type === 'progress' && d.data?.status === 'progress' && d.data?.loaded && d.data?.total) {
+      const pct = Math.round((d.data.loaded / d.data.total) * 100);
+      const file = d.data.file ? d.data.file.split('/').pop() : 'model';
+      const mb = (d.data.loaded / 1024 / 1024).toFixed(0) + ' / ' + (d.data.total / 1024 / 1024).toFixed(0);
+      webgpuLoaders.forEach(cb => cb({ type: 'progress', pct, file, mb }));
+    } else if (d.type === 'warmup') {
+      webgpuLoaders.forEach(cb => cb({ type: 'warmup' }));
+    } else if (d.type === 'ready') {
+      webgpuLoaders.forEach(cb => cb({ type: 'ready' }));
+      webgpuLoaders.clear();
+    } else if (d.type === 'token') {
+      const s = webgpuStreams.get(d.id);
+      if (s) s.onToken(d.text);
+    } else if (d.type === 'usage') {
+      const s = webgpuStreams.get(d.id);
+      if (s) s.onUsage(d.usage);
+    } else if (d.type === 'complete') {
+      const s = webgpuStreams.get(d.id);
+      if (s) s.resolve();
+      webgpuStreams.delete(d.id);
+    } else if (d.type === 'error') {
+      if (d.id) {
+        const s = webgpuStreams.get(d.id);
+        if (s) s.reject(new Error(d.message));
+        webgpuStreams.delete(d.id);
+      } else {
+        webgpuLoaders.forEach(cb => cb({ type: 'error', message: d.message }));
+        webgpuLoaders.clear();
+      }
+    }
+  });
+  return w;
+}
+
+async function ensureWebGPUModel(modelId) {
+  if (!navigator.gpu) throw new Error('WebGPU not available in this browser');
+  if (webgpuWorker && webgpuLoadedModel === modelId) return;
+  if (webgpuWorker) { webgpuWorker.terminate(); webgpuWorker = null; webgpuLoadedModel = null; }
+  webgpuWorker = createWebGPUWorker();
+  const m = PROVIDERS.webgpu.webgpuModels.find(x => x.id === modelId);
+  if (!m) throw new Error('Unknown WebGPU model: ' + modelId);
+  await new Promise((resolve, reject) => {
+    const id = shortId();
+    webgpuLoaders.set(id, (ev) => {
+      if (ev.type === 'progress' || ev.type === 'warmup') {
+        // update any cards waiting on us
+        webgpuLoadProgress = ev;
+        document.querySelectorAll('[data-webgpu-progress]').forEach(elx => {
+          if (ev.type === 'warmup') elx.textContent = 'warming up shaders…';
+          else if (ev.type === 'progress') elx.textContent = `loading ${ev.file} ${ev.pct}%`;
+        });
+      } else if (ev.type === 'ready') {
+        webgpuLoadedModel = modelId;
+        resolve();
+      } else if (ev.type === 'error') {
+        reject(new Error(ev.message));
+      }
+    });
+    webgpuWorker.postMessage({ type: 'load', modelId, dtype: m.dtype });
+  });
+}
+
+let webgpuLoadProgress = null;
+
+async function callWebGPU({ system, prompt, model, signal, onToken, onUsage }) {
+  await ensureWebGPUModel(model);
+  const id = shortId();
+  await new Promise((resolve, reject) => {
+    webgpuStreams.set(id, {
+      onToken,
+      onUsage: (u) => onUsage(u),
+      resolve,
+      reject,
+    });
+    const messages = [];
+    if (system) messages.push({ role: 'system', content: system });
+    messages.push({ role: 'user', content: prompt });
+    webgpuWorker.postMessage({ type: 'generate', messages, id, maxTokens: 1024, temperature: 0.7 });
+    if (signal) signal.addEventListener('abort', () => {
+      try { webgpuWorker.postMessage({ type: 'stop' }); } catch {}
+    });
+  });
+}
+
+// ─────────────────────────────────────────────────────────
+// OPFS — Run history storage
+// ─────────────────────────────────────────────────────────
+
+async function opfsDir() {
+  if (!navigator.storage?.getDirectory) return null;
+  const root = await navigator.storage.getDirectory();
+  return root.getDirectoryHandle('mantra-runs', { create: true });
+}
+
+async function saveRun(run) {
+  try {
+    const dir = await opfsDir();
+    if (!dir) return false;
+    const fh = await dir.getFileHandle(run.id + '.json', { create: true });
+    const w = await fh.createWritable();
+    await w.write(JSON.stringify(run, null, 2));
+    await w.close();
+    return true;
+  } catch (e) { console.warn('OPFS save failed', e); return false; }
+}
+
+async function listRuns(limit = 200) {
+  try {
+    const dir = await opfsDir();
+    if (!dir) return [];
+    const runs = [];
+    for await (const [name, fh] of dir.entries()) {
+      if (!name.endsWith('.json')) continue;
+      try {
+        const f = await fh.getFile();
+        const txt = await f.text();
+        const j = JSON.parse(txt);
+        runs.push(j);
+      } catch {}
+    }
+    runs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    return runs.slice(0, limit);
+  } catch (e) { console.warn('OPFS list failed', e); return []; }
+}
+
+async function deleteAllRuns() {
+  try {
+    const dir = await opfsDir();
+    if (!dir) return;
+    const names = [];
+    for await (const [name] of dir.entries()) if (name.endsWith('.json')) names.push(name);
+    for (const n of names) await dir.removeEntry(n);
+  } catch (e) { console.warn('OPFS clear failed', e); }
+}
+
+async function exportRunsToFolder() {
+  if (!window.showDirectoryPicker) { toast('FS API not supported in this browser', 'err'); return; }
+  let target;
+  try { target = await window.showDirectoryPicker({ mode: 'readwrite', startIn: 'documents' }); }
+  catch { return; }
+  const runs = await listRuns(10000);
+  let n = 0;
+  for (const r of runs) {
+    try {
+      const fh = await target.getFileHandle(r.id + '.json', { create: true });
+      const w = await fh.createWritable();
+      await w.write(JSON.stringify(r, null, 2));
+      await w.close();
+      n++;
+    } catch (e) { console.warn('Export skip', r.id, e); }
+  }
+  toast(`Exported ${n} run${n === 1 ? '' : 's'}`, 'ok');
+}
+
+async function importRunsFromFolder() {
+  if (!window.showDirectoryPicker) { toast('FS API not supported', 'err'); return; }
+  let src;
+  try { src = await window.showDirectoryPicker({ mode: 'read' }); }
+  catch { return; }
+  let n = 0;
+  for await (const [name, fh] of src.entries()) {
+    if (!name.endsWith('.json')) continue;
+    try {
+      const f = await fh.getFile();
+      const j = JSON.parse(await f.text());
+      if (!j.id) continue;
+      await saveRun(j);
+      n++;
+    } catch {}
+  }
+  toast(`Imported ${n} runs`, 'ok');
+  renderHistory();
+}
+
+// ─────────────────────────────────────────────────────────
+// State + UI: Prompt Studio
+// ─────────────────────────────────────────────────────────
+
+const state = {
+  selected: new Set(),           // provider ids currently selected
+  controllers: new Map(),        // provider id -> AbortController (for current run)
+  runs: [],                      // most recent in-memory
+  webgpuCurrent: null,           // model id selected for webgpu card
+  onRunCallbacks: [],
+};
+
+function renderProviderRow() {
+  const row = $('providers-row');
+  row.innerHTML = '';
+  for (const p of Object.values(PROVIDERS)) {
+    const key = p.shape === 'webgpu' || p.local ? '' : getKey(p.id);
+    const ready = p.shape === 'webgpu' ? (typeof navigator.gpu !== 'undefined') : (p.local || !!key);
+    const chip = el('div', {
+      class: 'provider-chip' + (state.selected.has(p.id) ? ' on' : '') + (ready ? ' ready' : ' nokey'),
+      onclick: () => {
+        if (state.selected.has(p.id)) state.selected.delete(p.id);
+        else state.selected.add(p.id);
+        lsSetJSON(LS.SELECTED, Array.from(state.selected));
+        renderProviderRow();
+      },
+      title: ready ? '' : 'No API key — set in Models tab',
+    }, el('span', { class: 'dot' }), p.label);
+    row.appendChild(chip);
+  }
+}
+
+function renderVarPanel() {
+  const tmpl = $('prompt-editor').value;
+  const vars = findVars(tmpl);
+  const panel = $('var-panel');
+  if (!vars.length) { panel.classList.add('empty'); panel.innerHTML = ''; return; }
+  const saved = lsGetJSON(LS.VARS, {});
+  panel.classList.remove('empty');
+  panel.innerHTML = '';
+  for (const v of vars) {
+    const inp = el('input', {
+      type: 'text', placeholder: 'value', value: saved[v.name] || '',
+      oninput: (e) => { saved[v.name] = e.target.value; lsSetJSON(LS.VARS, saved); },
+    });
+    panel.appendChild(el('div', { class: 'var-field' },
+      el('label', {}, '{{' + v.name + '}}'),
+      v.optional ? null : el('span', { class: 'req', title: 'required' }, '*'),
+      inp,
+    ));
+  }
+}
+
+function priceForRun(modelId, promptTokens, completionTokens) {
+  const p = PRICING[modelId];
+  if (!p) return null;
+  return ((promptTokens || 0) / 1000) * p.in + ((completionTokens || 0) / 1000) * p.out;
+}
+
+function buildResultCard(provider, model) {
+  const P = PROVIDERS[provider];
+  const cardId = 'card-' + provider + '-' + shortId();
+  const body = el('div', { class: 'card-body empty', id: cardId + '-body' }, '…');
+  const lat = el('span', { class: 'badge', id: cardId + '-lat' }, '—');
+  const cost = el('span', { class: 'badge', id: cardId + '-cost' }, '—');
+  const stopBtn = el('button', {
+    onclick: () => {
+      const c = state.controllers.get(provider);
+      if (c) c.abort();
+    }
+  }, 'Stop');
+  const copyBtn = el('button', {
+    onclick: () => copy(body.textContent),
+  }, 'Copy');
+  const card = el('div', { class: 'card', 'data-card': cardId },
+    el('div', { class: 'card-head' },
+      el('span', { class: 'name' }, P.label),
+      el('span', { class: 'model' }, model || '—'),
+      el('span', { class: 'grow' }),
+      lat,
+    ),
+    body,
+    el('div', { class: 'card-foot' },
+      cost,
+      el('span', { class: 'grow' }),
+      stopBtn,
+      copyBtn,
+    ),
+  );
+  return { card, body, lat, cost, stopBtn };
+}
+
+async function runFanout() {
+  if (!state.selected.size) { toast('Pick at least one provider', 'err'); return; }
+  const rawPrompt = $('prompt-editor').value.trim();
+  if (!rawPrompt) { toast('Enter a prompt', 'err'); return; }
+  const system = $('system-editor').value.trim();
+  const vars = lsGetJSON(LS.VARS, {});
+  lsSet(LS.PROMPT, $('prompt-editor').value);
+  lsSet(LS.SYSTEM, system);
+
+  // Check required vars
+  const required = findVars(rawPrompt).filter(v => !v.optional);
+  const missing = required.filter(v => !vars[v.name]);
+  if (missing.length) { toast('Missing required vars: ' + missing.map(v => v.name).join(', '), 'err'); return; }
+
+  const prompt = applyTemplate(rawPrompt, vars);
+
+  // Clear previous run UI
+  const results = $('results');
+  results.innerHTML = '';
+  state.controllers.clear();
+
+  $('btn-run').disabled = true;
+  $('btn-stop').style.display = '';
+  $('run-status').textContent = 'running…';
+
+  const runRecord = {
+    id: new Date().toISOString().replace(/[:.]/g, '-') + '-' + shortId(),
+    timestamp: Date.now(),
+    prompt: rawPrompt,
+    system,
+    vars,
+    providers: [],
+  };
+
+  const tasks = Array.from(state.selected).map(async (pid) => {
+    const P = PROVIDERS[pid];
+    const model = getModel(pid);
+    const { card, body, lat, cost, stopBtn } = buildResultCard(pid, model);
+    results.appendChild(card);
+    body.classList.remove('empty');
+    body.textContent = '';
+    const t0 = performance.now();
+    const ac = new AbortController();
+    state.controllers.set(pid, ac);
+    let text = '';
+    let usage = { prompt_tokens: null, completion_tokens: null };
+    const tickLat = setInterval(() => {
+      lat.textContent = fmtMs(Math.round(performance.now() - t0));
+    }, 100);
+
+    try {
+      await callProvider(pid, {
+        system, prompt, model,
+        signal: ac.signal,
+        onToken: (tok) => { text += tok; body.textContent = text; body.scrollTop = body.scrollHeight; },
+        onUsage: (u) => { usage = u; },
+      });
+      clearInterval(tickLat);
+      const elapsed = Math.round(performance.now() - t0);
+      lat.textContent = fmtMs(elapsed);
+      lat.classList.add('ok');
+      // estimate usage if provider didn't send
+      const inT = usage.prompt_tokens || approxTokens((system || '') + prompt);
+      const outT = usage.completion_tokens || approxTokens(text);
+      const c = priceForRun(model, inT, outT);
+      cost.textContent = (c != null ? '~' + fmtUsd(c) : '—') + ' · ' + inT + '→' + outT + 't';
+      runRecord.providers.push({
+        provider: pid, model, output: text, latencyMs: elapsed, costUsd: c,
+        tokens: { in: inT, out: outT },
+        error: null,
+      });
+    } catch (e) {
+      clearInterval(tickLat);
+      const elapsed = Math.round(performance.now() - t0);
+      lat.textContent = fmtMs(elapsed);
+      lat.classList.add('err');
+      if (e.name === 'AbortError') {
+        body.textContent = text + '\n\n[stopped]';
+        runRecord.providers.push({ provider: pid, model, output: text, latencyMs: elapsed, error: 'aborted', tokens: { in: 0, out: 0 } });
+      } else {
+        body.classList.add('error');
+        body.textContent = 'Error: ' + e.message;
+        runRecord.providers.push({ provider: pid, model, output: '', latencyMs: elapsed, error: e.message, tokens: { in: 0, out: 0 } });
+      }
+    } finally {
+      state.controllers.delete(pid);
+      stopBtn.disabled = true;
+    }
+  });
+
+  await Promise.allSettled(tasks);
+
+  $('btn-run').disabled = false;
+  $('btn-stop').style.display = 'none';
+  $('run-status').textContent = 'done';
+
+  state.runs.unshift(runRecord);
+  await saveRun(runRecord);
+  // notify subscribers
+  state.onRunCallbacks.forEach(cb => { try { cb(runRecord); } catch {} });
+  // refresh history count if visible
+  refreshHistCount();
+  return runRecord;
+}
+
+function stopAll() {
+  for (const ac of state.controllers.values()) ac.abort();
+  // Also stop webgpu generation
+  try { if (webgpuWorker) webgpuWorker.postMessage({ type: 'stop' }); } catch {}
+}
+
+// ─────────────────────────────────────────────────────────
+// Models tab — key cards + model matrix + rate-limit calc
+// ─────────────────────────────────────────────────────────
+
+function renderKeyCards() {
+  const grid = $('keys-grid');
+  grid.innerHTML = '';
+  for (const p of Object.values(PROVIDERS)) {
+    const card = el('div', { class: 'key-card' });
+    const name = el('div', {},
+      el('span', { class: 'name' }, p.label),
+      ' ',
+      p.local || p.shape === 'webgpu'
+        ? el('span', { class: 'badge ok' }, 'local')
+        : el('span', { class: 'badge' }, 'remote'),
+    );
+    card.appendChild(el('div', { class: 'row' }, name));
+    if (p.shape === 'webgpu') {
+      card.appendChild(el('div', { class: 'url' }, 'Transformers.js · WebGPU'));
+      const sel = el('select', {
+        class: 'mono',
+        style: { background: 'var(--bg-3)', color: 'var(--text)', border: '1px solid var(--border)', padding: '4px 6px', borderRadius: '4px', width: '100%', marginTop: '6px', fontFamily: 'var(--mono)' },
+        onchange: (e) => { lsSet(LS.MODEL(p.id), e.target.value); },
+      });
+      const cur = getModel(p.id);
+      for (const m of p.webgpuModels) {
+        sel.appendChild(el('option', { value: m.id, selected: m.id === cur }, m.label + ' · ' + m.size));
+      }
+      card.appendChild(sel);
+      card.appendChild(el('div', { class: 'muted', style: { marginTop: '4px' } },
+        navigator.gpu ? 'WebGPU detected ✓' : 'WebGPU not available in this browser'));
+    } else {
+      card.appendChild(el('div', { class: 'url' }, p.baseUrl.replace('{model}', '<model>')));
+      const keyInp = el('input', {
+        type: 'password',
+        placeholder: p.local ? '(no key needed)' : 'sk-…',
+        value: getKey(p.id),
+        style: { marginTop: '6px' },
+        onchange: (e) => {
+          lsSet(LS.KEY(p.id), e.target.value.trim());
+          renderProviderRow();
+        },
+      });
+      card.appendChild(keyInp);
+
+      // Model field — typeable input backed by a datalist hydrated from cache+known.
+      const modelInp = el('input', {
+        type: 'text',
+        placeholder: 'default: ' + p.defaultModel,
+        value: getModel(p.id),
+        list: 'mlist-' + p.id,
+        style: { marginTop: '6px', fontFamily: 'var(--mono)' },
+        onchange: (e) => { lsSet(LS.MODEL(p.id), e.target.value.trim() || p.defaultModel); },
+      });
+      card.appendChild(modelInp);
+      const dl = el('datalist', { id: 'mlist-' + p.id });
+      card.appendChild(dl);
+
+      // Hydrate datalist: cached fetched list first, then known fallbacks (dedup).
+      const populateDatalist = (models) => {
+        dl.innerHTML = '';
+        const seen = new Set();
+        for (const m of models || []) {
+          if (!m || seen.has(m)) continue;
+          seen.add(m);
+          dl.appendChild(el('option', { value: m }));
+        }
+      };
+      const cachedList = lsGetJSON(LS.MODELS_LIST(p.id), null);
+      const cachedAt = lsGet(LS.MODELS_FETCHED_AT(p.id), '');
+      populateDatalist(cachedList && cachedList.length ? cachedList : (p.knownModels || []));
+
+      // Status badges
+      const testStatus  = el('span', { class: 'badge' }, 'untested');
+      const fetchStatus = el('span', { class: 'badge' },
+        cachedList && cachedList.length
+          ? `${cachedList.length} cached`
+          : (p.knownModels?.length ? `${p.knownModels.length} known` : 'no list'));
+      if (cachedAt) fetchStatus.title = 'Last fetched ' + new Date(+cachedAt).toLocaleString();
+
+      const testBtn = el('button', {
+        class: 'btn',
+        title: 'Validate the API key against the provider',
+        onclick: async () => {
+          testStatus.className = 'badge';
+          testStatus.textContent = '…';
+          try {
+            const ok = await testProvider(p.id);
+            if (ok.ok) {
+              testStatus.className = 'badge ok';
+              testStatus.textContent = 'ok';
+            } else { throw new Error(ok.error || 'failed'); }
+          } catch (e) {
+            testStatus.className = 'badge err';
+            testStatus.textContent = (e.message || 'fail').slice(0, 40);
+          }
+          renderProviderRow();
+        },
+      }, 'Test key');
+
+      const fetchBtn = el('button', {
+        class: 'btn',
+        title: 'Retrieve the model catalog from this provider',
+        onclick: async () => {
+          fetchStatus.className = 'badge';
+          fetchStatus.textContent = 'fetching…';
+          try {
+            const ok = await fetchProviderModels(p.id);
+            if (ok.ok && ok.models?.length) {
+              populateDatalist(ok.models);
+              lsSetJSON(LS.MODELS_LIST(p.id), ok.models);
+              lsSet(LS.MODELS_FETCHED_AT(p.id), String(Date.now()));
+              fetchStatus.className = 'badge ok';
+              fetchStatus.textContent = ok.models.length + ' models';
+              fetchStatus.title = 'Last fetched ' + new Date().toLocaleString() + ' — start typing in the model field to filter';
+              toast(`${p.label}: ${ok.models.length} models cached`, 'ok');
+            } else if (ok.ok) {
+              fetchStatus.className = 'badge';
+              fetchStatus.textContent = 'no models';
+            } else {
+              throw new Error(ok.error || 'failed');
+            }
+          } catch (e) {
+            fetchStatus.className = 'badge err';
+            fetchStatus.textContent = (e.message || 'fail').slice(0, 40);
+          }
+          renderProviderRow();
+        },
+      }, '↻ Fetch models');
+
+      card.appendChild(el('div', { class: 'btn-row' }, testBtn, fetchBtn));
+      card.appendChild(el('div', { class: 'btn-row', style: { marginTop: '4px' } }, testStatus, fetchStatus));
+      card.appendChild(el('div', { class: 'muted', style: { marginTop: '4px', fontSize: '11px' } },
+        'Click the model field then type to filter the list.'));
+    }
+    grid.appendChild(card);
+  }
+}
+
+// Build a request to the provider's "list models" endpoint. Used by both
+// testProvider (validate the key) and fetchProviderModels (retrieve catalog).
+function buildModelsRequest(pid) {
+  const P = PROVIDERS[pid];
+  if (P.shape === 'anthropic') {
+    return {
+      url: 'https://api.anthropic.com/v1/models',
+      headers: { 'x-api-key': getKey(pid), 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+    };
+  }
+  let url = P.modelsUrl;
+  if (!url) return null;
+  const key = getKey(pid);
+  const headers = {};
+  if (P.keyHeader && key) headers[P.keyHeader] = (P.keyPrefix || '') + key;
+  if (P.keyParam && key)  url += (url.includes('?') ? '&' : '?') + P.keyParam + '=' + encodeURIComponent(key);
+  return { url, headers };
+}
+
+// Extract a flat list of model IDs from the provider's response, normalising
+// per-shape quirks (Gemini prefixes ids with "models/").
+function extractModelIds(pid, json) {
+  const P = PROVIDERS[pid];
+  let models = [];
+  if (Array.isArray(json.data))    models = json.data.map(m => m.id || m.name);
+  else if (Array.isArray(json.models)) models = json.models.map(m => m.id || m.name);
+  models = models.filter(Boolean);
+  if (P.shape === 'gemini') models = models.map(m => m.startsWith('models/') ? m.slice(7) : m);
+  models.sort();
+  return models;
+}
+
+async function testProvider(pid) {
+  const P = PROVIDERS[pid];
+  const req = buildModelsRequest(pid);
+  if (!req) return { ok: true };
+  if ((P.keyHeader || P.keyParam) && !getKey(pid) && !P.local) return { ok: false, error: 'no key' };
+  let r;
+  try {
+    r = await fetch(req.url, { headers: req.headers, signal: AbortSignal.timeout(8000) });
+  } catch (e) {
+    return { ok: false, error: 'network: ' + (e.message || 'unreachable') };
+  }
+  if (!r.ok) return { ok: false, error: r.status + ' ' + r.statusText };
+  return { ok: true };
+}
+
+async function fetchProviderModels(pid) {
+  const P = PROVIDERS[pid];
+  const req = buildModelsRequest(pid);
+  if (!req) return { ok: false, error: 'no models endpoint' };
+  if ((P.keyHeader || P.keyParam) && !getKey(pid) && !P.local) return { ok: false, error: 'no key' };
+  let r;
+  try {
+    r = await fetch(req.url, { headers: req.headers, signal: AbortSignal.timeout(10000) });
+  } catch (e) {
+    return { ok: false, error: 'network: ' + (e.message || 'unreachable') };
+  }
+  if (!r.ok) return { ok: false, error: r.status + ' ' + r.statusText };
+  let j;
+  try { j = await r.json(); } catch { return { ok: false, error: 'bad JSON' }; }
+  const models = extractModelIds(pid, j);
+  return { ok: true, models };
+}
+
+function renderModelMatrix() {
+  const tbl = $('model-matrix');
+  tbl.innerHTML = '';
+  tbl.appendChild(el('thead', {},
+    el('tr', {},
+      el('th', {}, 'Model'),
+      el('th', {}, 'Provider'),
+      el('th', {}, '$ / 1K in'),
+      el('th', {}, '$ / 1K out'),
+    ),
+  ));
+  const tbody = el('tbody');
+  // Cross-link pricing to provider via knownModels
+  const list = [];
+  for (const p of Object.values(PROVIDERS)) {
+    if (!p.knownModels) continue;
+    for (const m of p.knownModels) list.push({ provider: p.label, model: m });
+  }
+  for (const row of list) {
+    const pr = PRICING[row.model];
+    tbody.appendChild(el('tr', {},
+      el('td', { class: 'mono' }, row.model),
+      el('td', {}, row.provider),
+      el('td', { class: 'mono' }, pr ? '$' + pr.in.toFixed(5) : '—'),
+      el('td', { class: 'mono' }, pr ? '$' + pr.out.toFixed(5) : '—'),
+    ));
+  }
+  tbl.appendChild(tbody);
+}
+
+function renderRateLimit() {
+  const upd = () => {
+    const rpm = +$('rl-rpm').value || 0;
+    const jobs = +$('rl-jobs').value || 0;
+    const conc = +$('rl-conc').value || 1;
+    if (!rpm || !jobs) { $('rl-result').textContent = ''; return; }
+    const effective = Math.min(rpm, conc * 60);
+    const seconds = (jobs / effective) * 60;
+    const concurrentOk = conc * 60 <= rpm;
+    $('rl-result').textContent =
+      `→ ${effective}/min effective · ` +
+      `~${seconds < 60 ? seconds.toFixed(0)+'s' : (seconds/60).toFixed(1)+' min'} total · ` +
+      (concurrentOk ? 'concurrency ok' : `concurrency would exceed RPM (max ${Math.floor(rpm/60)})`);
+  };
+  ['rl-rpm', 'rl-jobs', 'rl-conc'].forEach(id => $(id).addEventListener('input', upd));
+  upd();
+}
+
+// ─────────────────────────────────────────────────────────
+// History tab
+// ─────────────────────────────────────────────────────────
+
+async function renderHistory() {
+  const list = $('history-list');
+  list.innerHTML = '';
+  const runs = await listRuns(200);
+  $('hist-count').textContent = runs.length;
+  if (!runs.length) {
+    list.appendChild(el('div', { class: 'muted', style: { padding: '20px', textAlign: 'center' } }, 'No runs yet. Fire a prompt from the Studio tab.'));
+    return;
+  }
+  for (const r of runs) {
+    const row = el('div', { class: 'history-row', onclick: () => loadRunIntoStudio(r) },
+      el('span', { class: 'ts' }, new Date(r.timestamp).toLocaleString()),
+      el('span', { class: 'pr' }, r.prompt.slice(0, 120)),
+      el('span', { class: 'chips' }, ...(r.providers || []).map(p =>
+        el('span', { class: 'chip' }, (PROVIDERS[p.provider]?.label || p.provider) + (p.error ? ' ✗' : '')))),
+    );
+    list.appendChild(row);
+  }
+}
+
+async function refreshHistCount() {
+  try {
+    const dir = await opfsDir();
+    if (!dir) return;
+    let n = 0;
+    for await (const [name] of dir.entries()) if (name.endsWith('.json')) n++;
+    $('hist-count').textContent = n;
+    $('opfs-count').textContent = n + ' runs';
+  } catch {}
+}
+
+function loadRunIntoStudio(run) {
+  $('prompt-editor').value = run.prompt;
+  $('system-editor').value = run.system || '';
+  lsSetJSON(LS.VARS, run.vars || {});
+  // Pre-select the same providers
+  state.selected = new Set((run.providers || []).map(p => p.provider).filter(p => PROVIDERS[p]));
+  lsSetJSON(LS.SELECTED, Array.from(state.selected));
+  renderVarPanel();
+  renderProviderRow();
+  switchTab('studio');
+  toast('Loaded into Studio — click Run to replay', 'ok');
+}
+
+// ─────────────────────────────────────────────────────────
+// Tab switching
+// ─────────────────────────────────────────────────────────
+
+function switchTab(tab) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === tab));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.dataset.panel === tab));
+  if (tab === 'history') renderHistory();
+  if (tab === 'models')  { renderKeyCards(); renderModelMatrix(); }
+  if (tab === 'settings') refreshHistCount();
+}
+
+// ─────────────────────────────────────────────────────────
+// JS API + cross-tab postMessage
+// ─────────────────────────────────────────────────────────
+
+function setupJSAPI() {
+  if (lsGet(LS.JSAPI, 'false') !== 'true') {
+    delete window.mantra;
+    return;
+  }
+  window.mantra = {
+    runPrompt: async (prompt, opts = {}) => {
+      $('prompt-editor').value = prompt;
+      if (opts.system) $('system-editor').value = opts.system;
+      if (opts.vars) lsSetJSON(LS.VARS, opts.vars);
+      if (Array.isArray(opts.providers)) {
+        state.selected = new Set(opts.providers.filter(p => PROVIDERS[p]));
+        lsSetJSON(LS.SELECTED, Array.from(state.selected));
+        renderProviderRow();
+      }
+      renderVarPanel();
+      return await runFanout();
+    },
+    getRuns: () => listRuns(200),
+    onRun: (cb) => { state.onRunCallbacks.push(cb); return () => { state.onRunCallbacks = state.onRunCallbacks.filter(x => x !== cb); }; },
+    providers: () => Object.keys(PROVIDERS),
+  };
+}
+
+function setupPostMessage() {
+  if (lsGet(LS.POSTMSG, 'false') !== 'true') return;
+  window.addEventListener('message', (ev) => {
+    const d = ev.data;
+    if (!d || d.target !== 'mantra') return;
+    if (d.type === 'runPrompt' && typeof d.prompt === 'string') {
+      $('prompt-editor').value = d.prompt;
+      if (d.system) $('system-editor').value = d.system;
+      if (d.vars) lsSetJSON(LS.VARS, d.vars);
+      renderVarPanel();
+      switchTab('studio');
+      toast('Prompt received via postMessage', 'ok');
+    }
+  });
+}
+
+// ─────────────────────────────────────────────────────────
+// Boot
+// ─────────────────────────────────────────────────────────
+
+function boot() {
+  // Nav
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.classList.contains('disabled')) return;
+    n.addEventListener('click', () => switchTab(n.dataset.tab));
+  });
+
+  // Studio
+  $('prompt-editor').value = lsGet(LS.PROMPT, 'Explain {{topic}} in two sentences for a senior engineer.');
+  $('system-editor').value = lsGet(LS.SYSTEM, '');
+  $('prompt-editor').addEventListener('input', () => { lsSet(LS.PROMPT, $('prompt-editor').value); renderVarPanel(); });
+  $('system-editor').addEventListener('input', () => { lsSet(LS.SYSTEM, $('system-editor').value); });
+
+  // Restore selected providers
+  const sel = lsGetJSON(LS.SELECTED, ['anthropic', 'openai']);
+  state.selected = new Set(sel.filter(p => PROVIDERS[p]));
+
+  $('btn-run').addEventListener('click', runFanout);
+  $('btn-stop').addEventListener('click', stopAll);
+
+  renderProviderRow();
+  renderVarPanel();
+
+  // Models tab init (will lazy render on switch)
+  renderRateLimit();
+
+  // History controls
+  $('btn-history-export').addEventListener('click', exportRunsToFolder);
+  $('btn-history-clear').addEventListener('click', async () => {
+    if (!confirm('Delete all stored runs? This cannot be undone.')) return;
+    await deleteAllRuns();
+    renderHistory();
+    refreshHistCount();
+  });
+
+  // Settings
+  $('opt-jsapi').checked = lsGet(LS.JSAPI, 'false') === 'true';
+  $('opt-postmsg').checked = lsGet(LS.POSTMSG, 'false') === 'true';
+  $('opt-jsapi').addEventListener('change', (e) => { lsSet(LS.JSAPI, String(e.target.checked)); setupJSAPI(); });
+  $('opt-postmsg').addEventListener('change', (e) => { lsSet(LS.POSTMSG, String(e.target.checked)); setupPostMessage(); });
+  $('btn-opfs-import').addEventListener('click', importRunsFromFolder);
+  $('btn-clear-all').addEventListener('click', async () => {
+    if (!confirm('Wipe all keys, runs, and preferences from this browser?')) return;
+    await deleteAllRuns();
+    Object.keys(localStorage).forEach(k => { if (k.startsWith('mantra:')) localStorage.removeItem(k); });
+    location.reload();
+  });
+
+  setupJSAPI();
+  setupPostMessage();
+  refreshHistCount();
+}
+
+boot();
+</script>
+</body>
+</html>
