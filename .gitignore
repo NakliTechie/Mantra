@@ -4,6 +4,11 @@
 !LICENSE
 !.gitignore
 !CNAME
+!scripts/
+!scripts/vendor-naklios-sdk.mjs
+!.github/
+!.github/workflows/
+!.github/workflows/vendor-sdk.yml
 
 # wrangler files
 .wrangler
