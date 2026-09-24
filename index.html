@@ -1941,6 +1941,17 @@ function nakliosFsAvailable() {
   return !!(window.naklios && naklios.capabilities.hosted && naklios.capabilities.fs);
 }
 const NAKLIOS_RUNS_DIR = 'runs';
+// A cross-origin iframe cannot open the folder picker; a same-origin mirror can.
+function canPickFolder() {
+  if (!window.showDirectoryPicker) return false;
+  if (window.parent === window) return true;
+  try { void window.parent.location.href; return true; } catch { return false; }
+}
+// Hosted cross-origin with no naklios.fs: the picker would throw, so point at NakliOS.
+function needsNakliOSStorage() {
+  return !!(window.naklios && naklios.capabilities.hosted) && window.parent !== window && !canPickFolder();
+}
+const NAKLIOS_CONNECT_HINT = 'Connect a Folder or Crate in NakliOS to keep runs there.';
 
 // Pricing per 1K tokens (USD). Refreshed 2026-05-15.
 const PRICING = {
@@ -2439,6 +2450,7 @@ async function deleteAllRuns() {
 
 async function exportRunsToFolder() {
   if (nakliosFsAvailable()) return exportRunsToNakliOS();
+  if (needsNakliOSStorage()) { toast(NAKLIOS_CONNECT_HINT, 'err'); return; }
   if (!window.showDirectoryPicker) { toast('FS API not supported in this browser', 'err'); return; }
   let target;
   try { target = await window.showDirectoryPicker({ mode: 'readwrite', startIn: 'documents' }); }
@@ -2459,6 +2471,7 @@ async function exportRunsToFolder() {
 
 async function importRunsFromFolder() {
   if (nakliosFsAvailable()) return importRunsFromNakliOS();
+  if (needsNakliOSStorage()) { toast(NAKLIOS_CONNECT_HINT, 'err'); return; }
   if (!window.showDirectoryPicker) { toast('FS API not supported', 'err'); return; }
   let src;
   try { src = await window.showDirectoryPicker({ mode: 'read' }); }
@@ -3982,6 +3995,9 @@ function setupNakliOS() {
     const hostFs = nakliosFsAvailable();
     $('btn-history-export').textContent = hostFs ? 'Export to NakliOS…' : 'Export to folder…';
     $('btn-opfs-import').textContent = hostFs ? 'Import from NakliOS…' : 'Import from folder…';
+    const hint = !hostFs && needsNakliOSStorage() ? NAKLIOS_CONNECT_HINT : '';
+    $('btn-history-export').title = hint;
+    $('btn-opfs-import').title = hint;
   });
   naklios.ready();
   naklios.requestCapabilities();

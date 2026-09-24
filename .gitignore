@@ -6,6 +6,7 @@
 !CNAME
 !scripts/
 !scripts/vendor-naklios-sdk.mjs
+!scripts/test-*.mjs
 !.github/
 !.github/workflows/
 !.github/workflows/vendor-sdk.yml
