@@ -3915,33 +3915,58 @@ function rrfFuse(rankings, k = 60) {
   return arr.map((x, rank) => ({ ...x, rank: rank + 1, source: 'hybrid' }));
 }
 
+// The shared Neural Engine embedder (naklios sdk/ane-embed.js). localStorage 'naklios.aneEmbed': 'off' turns it off;
+// a URL loads that copy instead (local testing). Without WebNN the worker runs WASM as before.
+function aneEmbedUrl() {
+  try {
+    const v = localStorage.getItem('naklios.aneEmbed');
+    if (v === 'off') return null;
+    if (v) return v;
+  } catch (_) {}
+  return 'https://naklios.dev/sdk/ane-embed.js';
+}
+
 function createEmbedWorker() {
   const code = `
-import {
-  env,
-  pipeline,
-} from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4/+esm';
+import * as transformers from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4/+esm';
+const { env, pipeline } = transformers;
 env.allowLocalModels  = true;
 env.localModelPath    = '/models/';
 env.allowRemoteModels = true;
 
+const progress = (p) => self.postMessage({ type: 'progress', data: p });
 let embedder = null;
 self.addEventListener('message', async (e) => {
   const { type } = e.data;
   try {
     if (type === 'load') {
-      embedder = await pipeline('feature-extraction', e.data.modelId, {
-        device: 'wasm',
-        progress_callback: (p) => self.postMessage({ type: 'progress', data: p }),
-      });
-      self.postMessage({ type: 'ready' });
-    } else if (type === 'embed') {
-      const out = [];
-      for (const text of e.data.texts) {
-        const o = await embedder(text, { pooling: 'mean', normalize: true });
-        out.push(Array.from(o.data));
+      const modelId = e.data.modelId;
+      // The CPU path (WASM), as before the Neural Engine option.
+      const loadCpu = async () => {
+        const extractor = await pipeline('feature-extraction', modelId, { device: 'wasm', progress_callback: progress });
+        return async (texts) => {
+          const out = [];
+          for (const text of texts) out.push((await extractor(text, { pooling: 'mean', normalize: true })).data);
+          return out;
+        };
+      };
+      // The Neural Engine through WebNN (naklios sdk/ane-embed.js) when the page passes its URL; the CPU otherwise
+      // or when its import or load check fails.
+      let createEmbedder = null, note = '';
+      if (e.data.aneUrl) {
+        try { ({ createEmbedder } = await import(e.data.aneUrl)); }
+        catch (err) { note = 'the Neural Engine module did not load: ' + String(err?.message || err).slice(0, 160) + '.'; }
       }
-      self.postMessage({ type: 'embeddings', vectors: out, id: e.data.id });
+      embedder = createEmbedder
+        ? await createEmbedder(transformers, modelId, {
+            loadCpu, progress,
+            onBackend: (backend, why) => { if (embedder) self.postMessage({ type: 'backend', backend, note: why }); },
+          })
+        : { backend: 'cpu', note, embed: await loadCpu() };
+      self.postMessage({ type: 'ready', backend: embedder.backend, note: embedder.note });
+    } else if (type === 'embed') {
+      const vectors = await embedder.embed(e.data.texts);
+      self.postMessage({ type: 'embeddings', vectors: vectors.map((v) => Array.from(v)), id: e.data.id });
     }
   } catch (err) {
     self.postMessage({ type: 'error', message: err.message || String(err) });
@@ -3978,6 +4003,8 @@ async function embedChunks() {
         } else if (e.data.type === 'ready') {
           ragState.worker.removeEventListener('message', onMsg);
           ragState.embedModel = modelId;
+          ragState.embedBackend = e.data.backend;
+          ragState.embedNote = e.data.note || '';
           resolve();
         } else if (e.data.type === 'error') {
           ragState.worker.removeEventListener('message', onMsg);
@@ -3985,7 +4012,10 @@ async function embedChunks() {
         }
       };
       ragState.worker.addEventListener('message', onMsg);
-      ragState.worker.postMessage({ type: 'load', modelId });
+      ragState.worker.addEventListener('message', (e) => {
+        if (e.data.type === 'backend') { ragState.embedBackend = e.data.backend; ragState.embedNote = e.data.note || ''; }
+      });
+      ragState.worker.postMessage({ type: 'load', modelId, aneUrl: aneEmbedUrl() });
     });
   }
   $('rag-embed-status').innerHTML = 'embedding ' + ragState.chunks.length + ' chunks…';
@@ -4005,7 +4035,9 @@ async function embedChunks() {
   });
   ragState.vectors = vectors;
   ragState.bm25 = buildBM25(ragState.chunks);
-  $('rag-embed-status').innerHTML = '<span class="ok">ready</span> · model ' + modelId + ' · ' + vectors.length + ' vectors · ' + vectors[0]?.length + 'd';
+  $('rag-embed-status').innerHTML = '<span class="ok">ready</span> · model ' + modelId + ' · ' + vectors.length + ' vectors · ' + vectors[0]?.length + 'd'
+    + ' · ' + (ragState.embedBackend === 'webnn-npu' ? 'Neural Engine' : 'CPU');
+  if (ragState.embedNote) $('rag-embed-status').title = 'CPU because ' + ragState.embedNote;
 }
 
 async function runRetrieve() {
